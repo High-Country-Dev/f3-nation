@@ -198,7 +198,7 @@ export const UserTable = () => {
   }, []);
 
   const { data } = useQuery(
-    orpc.mapAdmin.users.all.queryOptions({
+    orpc.user.all.queryOptions({
       input: {
         roles: selectedRoles,
         statuses: selectedStatuses,

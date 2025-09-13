@@ -6,7 +6,7 @@ import {
   isTestNodeEnv,
 } from "@acme/shared/common/constants";
 
-import type { AppContext } from "./shared";
+import type { Context } from "./shared";
 
 const ALLOW_MTNDEV_OVERRIDE = false as boolean;
 
@@ -18,16 +18,25 @@ export const checkHasRoleOnOrg = async ({
   db,
   roleName,
 }: {
-  session: Session;
+  session: Session | null;
   roleName: UserRole;
   orgId: number;
-  db: AppContext["db"];
+  db: Context["db"];
 }): Promise<{
   success: boolean;
   orgId: number | null;
   roleName: UserRole | null;
   mode: "mtndev-override" | "direct-permission" | "org-admin" | "no-permission";
 }> => {
+  if (!session) {
+    return {
+      success: false,
+      orgId: null,
+      roleName: null,
+      mode: "no-permission",
+    };
+  }
+
   if (LOG)
     console.log(
       "Checking if user has role on org",
