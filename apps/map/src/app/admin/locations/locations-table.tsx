@@ -17,7 +17,7 @@ import {
 import { MDTable, usePagination } from "@acme/ui/md-table";
 import { Cell, Header } from "@acme/ui/table";
 
-import { api } from "~/trpc/react";
+import { orpc, useQuery } from "~/orpc/react";
 import { DeleteType, ModalType, openModal } from "~/utils/store/modal";
 import { RegionFilter } from "../_components/region-filter";
 import { LocationIsActiveFilter } from "./location-is-active-table";
@@ -32,14 +32,18 @@ export const LocationsTable = () => {
   const [selectedStatuses, setSelectedStatuses] = useState<IsActiveStatus[]>([
     "active",
   ]);
-  const { data: locations } = api.location.all.useQuery({
-    pageIndex: pagination.pageIndex,
-    pageSize: pagination.pageSize,
-    searchTerm: searchTerm,
-    sorting: sorting,
-    statuses: selectedStatuses,
-    regionIds: selectedRegions.map((region) => region.id),
-  });
+  const { data: locations } = useQuery(
+    orpc.location.all.queryOptions({
+      input: {
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        searchTerm: searchTerm,
+        sorting: sorting,
+        statuses: selectedStatuses,
+        regionIds: selectedRegions.map((region) => region.id),
+      },
+    }),
+  );
 
   const handleStatusSelect = (status: IsActiveStatus) => {
     setSelectedStatuses((prev) => {

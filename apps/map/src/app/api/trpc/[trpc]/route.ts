@@ -7,7 +7,9 @@ import { appRouter, createTRPCContext } from "@acme/api";
 import { notifyWebhooks } from "@acme/api/lib/notify-webhooks";
 import { auth } from "@acme/auth";
 
-import type { RouterOutputs } from "~/trpc/types";
+import type { RouterOutputs } from "~/orpc/types";
+
+// TODO ORPC - notify webhooks
 
 const updateDataPath = [
   "event.crupdate",

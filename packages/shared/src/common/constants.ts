@@ -7,4 +7,6 @@ export const isProductionNodeEnv = process.env.NODE_ENV === "production";
 export const isDevelopmentNodeEnv = process.env.NODE_ENV === "development";
 export const isTestNodeEnv = process.env.NODE_ENV === "test";
 
+export const isProd = process.env.NEXT_PUBLIC_CHANNEL === "prod";
+
 export const RERENDER_LOGS = false;

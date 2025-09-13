@@ -8,7 +8,6 @@ import { ThemeProvider } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
 import { env } from "~/env";
-import { TRPCReactProvider } from "~/trpc/react";
 
 import "~/app/globals.css";
 
@@ -70,11 +69,9 @@ const DataProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <SessionProvider>
       <OrpcReactProvider>
-        <TRPCReactProvider>
-          <UserLocationProvider>
-            <KeyPressProvider>{children}</KeyPressProvider>
-          </UserLocationProvider>
-        </TRPCReactProvider>
+        <UserLocationProvider>
+          <KeyPressProvider>{children}</KeyPressProvider>
+        </UserLocationProvider>
       </OrpcReactProvider>
     </SessionProvider>
   );
