@@ -8,7 +8,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 
 import type { router } from "@acme/api-orpc";
 
-import { createQueryClient } from "~/trpc/query-client";
+import { createQueryClient } from "~/orpc/query-client";
 import { client } from "./client";
 
 export type Outputs = InferRouterOutputs<typeof router>;
