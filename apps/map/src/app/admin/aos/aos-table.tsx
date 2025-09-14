@@ -4,7 +4,6 @@ import type { TableOptions } from "@tanstack/react-table";
 import { useCallback, useState } from "react";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
-import type { RouterOutputs } from "@acme/api";
 import type { IsActiveStatus } from "@acme/shared/app/enums";
 import type { SortingSchema } from "@acme/validators";
 import { Button } from "@acme/ui/button";
@@ -17,6 +16,7 @@ import {
 import { MDTable, usePagination } from "@acme/ui/md-table";
 import { Cell, Header } from "@acme/ui/table";
 
+import type { RouterOutputs } from "~/orpc/types";
 import { IsActiveFilter } from "~/app/admin/_components/is-active-filter";
 import { RegionFilter } from "~/app/admin/_components/region-filter";
 import { orpc, useQuery } from "~/orpc/react";

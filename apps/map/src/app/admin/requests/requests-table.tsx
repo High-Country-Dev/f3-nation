@@ -5,7 +5,6 @@ import { useState } from "react";
 import dayjs from "dayjs";
 import { Check, Filter, X } from "lucide-react";
 
-import type { RouterOutputs } from "@acme/api";
 import { UpdateRequestStatus } from "@acme/shared/app/enums";
 import { ZustandStore } from "@acme/shared/common/classes";
 import { cn } from "@acme/ui";
@@ -21,6 +20,7 @@ import { MDTable } from "@acme/ui/md-table";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { Cell, Header } from "@acme/ui/table";
 
+import type { RouterOutputs } from "~/orpc/types";
 import { orpc, useQuery } from "~/orpc/react";
 import { ModalType, openModal } from "~/utils/store/modal";
 

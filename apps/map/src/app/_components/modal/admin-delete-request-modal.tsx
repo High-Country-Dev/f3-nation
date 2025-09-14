@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { TRPCClientError } from "@trpc/client";
 import { Trash } from "lucide-react";
 
 import { Z_INDEX } from "@acme/shared/app/constants";
@@ -17,7 +16,7 @@ import { Spinner } from "@acme/ui/spinner";
 import { toast } from "@acme/ui/toast";
 
 import type { DataType, ModalType } from "~/utils/store/modal";
-import { invalidateQueries, orpc, useQuery } from "~/orpc/react";
+import { invalidateQueries, orpc, ORPCError, useQuery } from "~/orpc/react";
 import { closeModal, modalStore } from "~/utils/store/modal";
 
 export default function AdminDeleteRequestModal({
@@ -49,7 +48,7 @@ export default function AdminDeleteRequestModal({
       toast.error("Rejected delete request");
       closeModal();
     } catch (error) {
-      if (error instanceof TRPCClientError) {
+      if (error instanceof ORPCError) {
         toast.error(error.message);
       } else {
         toast.error("Failed to reject delete request");
@@ -90,7 +89,7 @@ export default function AdminDeleteRequestModal({
       modalStore.setState({ modals: [] });
     } catch (error) {
       console.error(error);
-      if (error instanceof TRPCClientError) {
+      if (error instanceof ORPCError) {
         toast.error(error.message);
       } else {
         toast.error("Failed to submit delete request");

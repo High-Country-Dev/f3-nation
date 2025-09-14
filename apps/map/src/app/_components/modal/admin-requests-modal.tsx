@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { TRPCClientError } from "@trpc/client";
 import { v4 as uuid } from "uuid";
 
 import { Z_INDEX } from "@acme/shared/app/constants";
@@ -23,7 +22,13 @@ import { Spinner } from "@acme/ui/spinner";
 import { toast } from "@acme/ui/toast";
 
 import type { DataType, ModalType } from "~/utils/store/modal";
-import { invalidateQueries, orpc, useMutation, useQuery } from "~/orpc/react";
+import {
+  invalidateQueries,
+  orpc,
+  ORPCError,
+  useMutation,
+  useQuery,
+} from "~/orpc/react";
 import { useUpdateLocationForm } from "~/utils/forms";
 import { closeModal } from "~/utils/store/modal";
 import { FormDebugData, LocationEventForm } from "../forms/location-event-form";
@@ -77,7 +82,7 @@ export default function AdminRequestsModal({
         closeModal();
       } catch (error) {
         console.log(error);
-        if (!(error instanceof TRPCClientError)) {
+        if (!(error instanceof ORPCError)) {
           toast.error("Failed to approve update");
           return;
         }

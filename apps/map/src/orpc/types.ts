@@ -1,6 +1,6 @@
 import type { InferRouterInputs, InferRouterOutputs } from "@orpc/server";
 
-import type { router } from "@acme/api-orpc";
+import type { router } from "@acme/api";
 
 // infer the types for your router
 export type RouterInputs = InferRouterInputs<typeof router>;

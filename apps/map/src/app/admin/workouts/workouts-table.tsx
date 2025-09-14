@@ -4,7 +4,6 @@ import type { SortingState, TableOptions } from "@tanstack/react-table";
 import { useCallback, useState } from "react";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
-import type { RouterOutputs } from "@acme/api";
 import type { IsActiveStatus } from "@acme/shared/app/enums";
 import { dayOfWeekToShortDayOfWeek } from "@acme/shared/app/functions";
 import { Button } from "@acme/ui/button";
@@ -17,6 +16,7 @@ import {
 import { MDTable, usePagination } from "@acme/ui/md-table";
 import { Cell, Header } from "@acme/ui/table";
 
+import type { RouterOutputs } from "~/orpc/types";
 import { orpc, useQuery } from "~/orpc/react";
 import { DeleteType, ModalType, openModal } from "~/utils/store/modal";
 import { AOSFilter } from "../_components/ao-filter";

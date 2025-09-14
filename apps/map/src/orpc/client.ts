@@ -2,7 +2,7 @@ import type { RouterClient } from "@orpc/server";
 import { createORPCClient, onError } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 
-import type { router } from "@acme/api-orpc";
+import type { router } from "@acme/api";
 
 declare global {
   // eslint-disable-next-line no-var

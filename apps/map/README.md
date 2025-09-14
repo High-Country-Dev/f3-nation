@@ -94,7 +94,7 @@ This application is built with:
 - **Next.js 14** with App Router
 - **React** with TypeScript
 - **Tailwind CSS** for styling
-- **tRPC** for type-safe API calls
+- **oRPC** for type-safe API calls
 - **Drizzle ORM** for database operations
 - **Playwright** for end-to-end testing
 - **Vitest** for unit testing

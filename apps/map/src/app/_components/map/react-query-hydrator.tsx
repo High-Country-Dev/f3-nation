@@ -2,8 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import type { RouterOutputs } from "@acme/api";
-
+import type { RouterOutputs } from "~/orpc/types";
 import { orpc, useQuery } from "~/orpc/react";
 
 /**
@@ -15,7 +14,6 @@ export const ReactQueryHydrator = (params: {
   regionsWithLocationData: RouterOutputs["location"]["getRegionsWithLocation"];
   children: ReactNode;
 }) => {
-  console.log("ReactQueryHydrator rerender", params.mapEventAndLocationData);
   useQuery(
     orpc.location.getMapEventAndLocationData.queryOptions({
       input: undefined,

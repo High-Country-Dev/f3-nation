@@ -10,7 +10,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 
-import type { router } from "@acme/api-orpc";
+import type { router } from "@acme/api";
 import { isDevelopmentNodeEnv } from "@acme/shared/common/constants";
 
 import { createQueryClient } from "~/orpc/query-client";
