@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+import { ORPCError } from "@orpc/server";
 import dayjs from "dayjs";
 import omit from "lodash/omit";
 import { z } from "zod";
@@ -26,15 +26,15 @@ import {
   SortingSchema,
 } from "@acme/validators";
 
-import type { Context } from "../trpc";
+import type { Context } from "../shared";
 import { checkHasRoleOnOrg } from "../check-has-role-on-org";
 import { getEditableOrgIdsForUser } from "../get-editable-org-ids";
 import { getSortingColumns } from "../get-sorting-columns";
 import { notifyMapChangeRequest } from "../services/map-request-notification";
-import { createTRPCRouter, editorProcedure, publicProcedure } from "../trpc";
+import { editorProcedure, publicProcedure } from "../shared";
 import { withPagination } from "../with-pagination";
 
-export const requestRouter = createTRPCRouter({
+export const requestRouter = {
   all: editorProcedure
     .input(
       z
@@ -48,7 +48,15 @@ export const requestRouter = createTRPCRouter({
         })
         .optional(),
     )
-    .query(async ({ ctx, input }) => {
+    .route({
+      method: "GET",
+      path: "/all",
+      tags: ["request"],
+      summary: "List all requests",
+      description:
+        "Get a paginated list of map change requests with optional filtering and sorting",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const onlyMine = input?.onlyMine ?? false;
       const oldAoOrg = aliasedTable(schema.orgs, "old_ao_org");
       const oldRegionOrg = aliasedTable(schema.orgs, "old_region_org");
@@ -205,7 +213,15 @@ export const requestRouter = createTRPCRouter({
     }),
   byId: editorProcedure
     .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
+    .route({
+      method: "GET",
+      path: "/by-id",
+      tags: ["request"],
+      summary: "Get request by ID",
+      description:
+        "Retrieve detailed information about a specific map change request",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const [request] = await ctx.db
         .select()
         .from(schema.updateRequests)
@@ -214,7 +230,15 @@ export const requestRouter = createTRPCRouter({
     }),
   canDeleteEvent: publicProcedure
     .input(z.object({ eventId: z.number() }))
-    .query(async ({ ctx, input }) => {
+    .route({
+      method: "GET",
+      path: "/can-delete-event",
+      tags: ["request"],
+      summary: "Check if event can be deleted",
+      description:
+        "Check if there is a pending delete request for a specific event",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const [request] = await ctx.db
         .select()
         .from(schema.updateRequests)
@@ -229,7 +253,15 @@ export const requestRouter = createTRPCRouter({
     }),
   canEditRegions: publicProcedure
     .input(z.object({ orgIds: z.array(z.number()) }))
-    .query(async ({ ctx, input }) => {
+    .route({
+      method: "POST",
+      path: "/can-edit-regions",
+      tags: ["request"],
+      summary: "Check region edit permissions",
+      description:
+        "Check if the current user has editor permissions for specified organizations",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const session = ctx.session;
       if (!session) {
         return input.orgIds.map((orgId) => ({
@@ -254,7 +286,14 @@ export const requestRouter = createTRPCRouter({
     }),
   submitDeleteRequest: publicProcedure
     .input(DeleteRequestSchema)
-    .mutation(async ({ ctx, input }) => {
+    .route({
+      method: "POST",
+      path: "/submit-delete-request",
+      tags: ["request"],
+      summary: "Submit delete request",
+      description: "Submit a request to delete an event or location",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const submittedBy = ctx.session?.user?.email ?? input.submittedBy;
       if (!submittedBy) {
         throw new Error("Submitted by is required");
@@ -334,7 +373,14 @@ export const requestRouter = createTRPCRouter({
     }),
   submitUpdateRequest: publicProcedure
     .input(RequestInsertSchema)
-    .mutation(async ({ ctx, input }) => {
+    .route({
+      method: "POST",
+      path: "/submit-update-request",
+      tags: ["request"],
+      summary: "Submit update request",
+      description: "Submit a request to create or update a workout on the map",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const submittedBy = ctx.session?.user?.email ?? input.submittedBy;
       if (!submittedBy) {
         throw new Error("Submitted by is required");
@@ -453,7 +499,14 @@ export const requestRouter = createTRPCRouter({
     }),
   validateDeleteByAdmin: editorProcedure
     .input(DeleteRequestSchema)
-    .mutation(async ({ ctx, input }) => {
+    .route({
+      method: "POST",
+      path: "/validate-delete-by-admin",
+      tags: ["request"],
+      summary: "Approve delete request",
+      description: "Approve and apply a delete request as an admin",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const result = await applyDeleteRequest(ctx, {
         ...input,
         reviewedBy: ctx.session?.user?.email,
@@ -462,11 +515,17 @@ export const requestRouter = createTRPCRouter({
     }),
   validateSubmissionByAdmin: editorProcedure
     .input(RequestInsertSchema)
-    .mutation(async ({ ctx, input }) => {
-      const reviewedBy = ctx.session.user.email;
+    .route({
+      method: "POST",
+      path: "/validate-submission-by-admin",
+      tags: ["request"],
+      summary: "Approve update request",
+      description: "Approve and apply an update request as an admin",
+    })
+    .handler(async ({ context: ctx, input }) => {
+      const reviewedBy = ctx.session?.user?.email;
       if (!reviewedBy) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
+        throw new ORPCError("BAD_REQUEST", {
           message: "Validated by is required",
         });
       }
@@ -479,8 +538,7 @@ export const requestRouter = createTRPCRouter({
       });
 
       if (!roleCheckResult.success) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
+        throw new ORPCError("UNAUTHORIZED", {
           message: "You are not authorized to edit this region",
         });
       }
@@ -512,7 +570,14 @@ export const requestRouter = createTRPCRouter({
     }),
   rejectSubmission: editorProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
+    .route({
+      method: "POST",
+      path: "/reject-submission",
+      tags: ["request"],
+      summary: "Reject request",
+      description: "Reject a pending map change request",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const [updateRequest] = await ctx.db
         .select()
         .from(schema.updateRequests)
@@ -531,8 +596,7 @@ export const requestRouter = createTRPCRouter({
         });
 
       if (!hasPermissionToEditThisRegion) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
+        throw new ORPCError("UNAUTHORIZED", {
           message: "You are not authorized to edit this region",
         });
       }
@@ -541,7 +605,7 @@ export const requestRouter = createTRPCRouter({
         .set({ status: "rejected" })
         .where(eq(schema.updateRequests.id, input.id));
     }),
-});
+};
 
 export const applyDeleteRequest = async (
   ctx: Context,

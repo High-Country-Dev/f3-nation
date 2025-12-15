@@ -31,6 +31,7 @@ import type {
   UserMeta,
 } from "@acme/shared/app/types";
 import {
+  AchievementCadence,
   DayOfWeek,
   EventCadence,
   EventCategory,
@@ -54,6 +55,10 @@ export const updateRequestStatus = pgEnum(
 );
 export const userStatus = pgEnum("user_status", UserStatus);
 export const requestType = pgEnum("request_type", RequestType);
+export const achievementCadence = pgEnum(
+  "achievement_cadence",
+  AchievementCadence,
+);
 
 export const citext = customType<{ data: string }>({
   fromDriver(value) {
@@ -95,6 +100,7 @@ export const eventInstances = pgTable(
     backblastRich: json("backblast_rich"),
     preblastTs: doublePrecision("preblast_ts"),
     backblastTs: doublePrecision("backblast_ts"),
+    isPrivate: boolean("is_private").default(false).notNull(),
     meta: json(),
     created: timestamp({ mode: "string" })
       .default(sql`timezone('utc'::text, now())`)
@@ -198,7 +204,7 @@ export const slackUsers = pgTable(
     stravaExpiresAt: timestamp("strava_expires_at", { mode: "string" }),
     stravaAthleteId: integer("strava_athlete_id"),
     meta: json().$type<SlackUserMeta>(),
-    slackUpdated: timestamp("slack_updated", { mode: "string" }),
+    slackUpdated: integer("slack_updated"),
     created: timestamp({ mode: "string" })
       .default(sql`timezone('utc'::text, now())`)
       .notNull(),
@@ -321,6 +327,7 @@ export const eventTags = pgTable(
       .default(sql`timezone('utc'::text, now())`)
       .notNull(),
     specificOrgId: integer("specific_org_id"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [
     foreignKey({
@@ -383,7 +390,6 @@ export const achievements = pgTable(
     id: serial().primaryKey().notNull(),
     name: varchar().notNull(),
     description: varchar(),
-    verb: varchar().notNull(),
     imageUrl: varchar("image_url"),
     created: timestamp({ mode: "string" })
       .default(sql`timezone('utc'::text, now())`)
@@ -392,6 +398,13 @@ export const achievements = pgTable(
       .default(sql`timezone('utc'::text, now())`)
       .notNull(),
     specificOrgId: integer("specific_org_id"),
+    isActive: boolean("is_active").default(true).notNull(),
+    autoAward: boolean("auto_award").default(false).notNull(),
+    autoCadence: achievementCadence("auto_cadence"),
+    autoThresholdType: varchar("auto_threshold_type"),
+    autoThreshold: integer("auto_threshold"),
+    autoFilters: json("auto_filters"),
+    meta: json(),
   },
   (table) => [
     foreignKey({
@@ -489,6 +502,7 @@ export const positions = pgTable(
       .default(sql`timezone('utc'::text, now())`)
       .notNull(),
     orgType: orgType("org_type"),
+    isActive: boolean("is_active").default(true).notNull(),
   },
   (table) => [
     foreignKey({
@@ -519,6 +533,7 @@ export const events = pgTable(
     recurrenceInterval: integer("recurrence_interval"),
     indexWithinInterval: integer("index_within_interval"),
     meta: json().$type<EventMeta>(),
+    isPrivate: boolean("is_private").default(false).notNull(),
     created: timestamp({ mode: "string" })
       .default(sql`timezone('utc'::text, now())`)
       .notNull(),
@@ -813,6 +828,8 @@ export const achievementsXUsers = pgTable(
   {
     achievementId: integer("achievement_id").notNull(),
     userId: integer("user_id").notNull(),
+    awardYear: integer("award_year").notNull().default(-1),
+    awardPeriod: integer("award_period").notNull().default(-1),
     dateAwarded: timestamp("date_awarded", { mode: "string" })
       .default(sql`timezone('utc'::text, now())`)
       .notNull(),
@@ -829,7 +846,12 @@ export const achievementsXUsers = pgTable(
       name: "achievements_x_users_user_id_fkey",
     }),
     primaryKey({
-      columns: [table.achievementId, table.userId],
+      columns: [
+        table.achievementId,
+        table.userId,
+        table.awardYear,
+        table.awardPeriod,
+      ],
       name: "achievements_x_users_pkey",
     }),
   ],
@@ -996,6 +1018,37 @@ export const authVerificationTokens = pgTable(
     primaryKey({
       columns: [table.identifier, table.token],
       name: "auth_verification_tokens_pkey",
+    }),
+  ],
+);
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: serial().primaryKey().notNull(),
+    key: varchar().notNull(),
+    name: varchar().notNull(),
+    description: varchar(),
+    ownerId: integer("owner_id"),
+    orgIds: json("org_ids")
+      .$type<number[]>()
+      .default(sql`'[]'::json`),
+    revokedAt: timestamp("revoked_at", { mode: "string" }),
+    lastUsedAt: timestamp("last_used_at", { mode: "string" }),
+    expiresAt: timestamp("expires_at", { mode: "string" }),
+    created: timestamp({ mode: "string" })
+      .default(sql`timezone('utc'::text, now())`)
+      .notNull(),
+    updated: timestamp({ mode: "string" })
+      .default(sql`timezone('utc'::text, now())`)
+      .notNull(),
+  },
+  (table) => [
+    unique("api_keys_key_key").on(table.key),
+    foreignKey({
+      columns: [table.ownerId],
+      foreignColumns: [users.id],
+      name: "api_keys_owner_id_fkey",
     }),
   ],
 );

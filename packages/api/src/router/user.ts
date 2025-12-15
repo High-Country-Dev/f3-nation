@@ -1,4 +1,4 @@
-import { TRPCError } from "@trpc/server";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
@@ -17,12 +17,12 @@ import { CrupdateUserSchema, SortingSchema } from "@acme/validators";
 
 import { checkHasRoleOnOrg } from "../check-has-role-on-org";
 import { getSortingColumns } from "../get-sorting-columns";
-import { createTRPCRouter, editorProcedure } from "../trpc";
+import { editorProcedure } from "../shared";
 import { withPagination } from "../with-pagination";
 
 const schema = { ...schemaRaw, users: schemaRaw.users };
 
-export const userRouter = createTRPCRouter({
+export const userRouter = {
   all: editorProcedure
     .input(
       z
@@ -37,7 +37,15 @@ export const userRouter = createTRPCRouter({
         })
         .optional(),
     )
-    .query(async ({ ctx, input }) => {
+    .route({
+      method: "GET",
+      path: "/all",
+      tags: ["user"],
+      summary: "List all users",
+      description:
+        "Get a paginated list of users with optional filtering by role, status, and organization",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const limit = input?.pageSize ?? 10;
       const offset = (input?.pageIndex ?? 0) * limit;
       const usePagination =
@@ -165,7 +173,15 @@ export const userRouter = createTRPCRouter({
     }),
   byId: editorProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ ctx, input }) => {
+    .route({
+      method: "GET",
+      path: "/by-id",
+      tags: ["user"],
+      summary: "Get user by ID",
+      description:
+        "Retrieve detailed information about a specific user including their roles",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const [user] = await ctx.db
         .select({
           id: schema.users.id,
@@ -207,7 +223,15 @@ export const userRouter = createTRPCRouter({
     }),
   crupdate: editorProcedure
     .input(CrupdateUserSchema)
-    .mutation(async ({ ctx, input }) => {
+    .route({
+      method: "POST",
+      path: "/crupdate",
+      tags: ["user"],
+      summary: "Create or update user",
+      description:
+        "Create a new user or update an existing one, including role assignments",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const { roles, ...rest } = input;
       const [user] = await ctx.db
         .insert(schema.users)
@@ -260,8 +284,7 @@ export const userRouter = createTRPCRouter({
           roleName: "admin",
         });
         if (!success) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
+          throw new ORPCError("UNAUTHORIZED", {
             message:
               "You do not have permission to give this role to this user",
           });
@@ -288,8 +311,7 @@ export const userRouter = createTRPCRouter({
           roleName: "admin",
         });
         if (!success) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
+          throw new ORPCError("UNAUTHORIZED", {
             message:
               "You do not have permission to remove this role from this user",
           });
@@ -340,7 +362,15 @@ export const userRouter = createTRPCRouter({
 
   delete: editorProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
+    .route({
+      method: "DELETE",
+      path: "/delete",
+      tags: ["user"],
+      summary: "Delete user",
+      description:
+        "Permanently delete a user and all their role assignments (requires nation admin)",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const [f3nationOrg] = await ctx.db
         .select()
         .from(schema.orgs)
@@ -353,8 +383,7 @@ export const userRouter = createTRPCRouter({
         .limit(1);
 
       if (!f3nationOrg) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
+        throw new ORPCError("UNAUTHORIZED", {
           message: "No F3 Nation record is found.",
         });
       }
@@ -367,8 +396,7 @@ export const userRouter = createTRPCRouter({
       });
 
       if (!roleCheckResult.success) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
+        throw new ORPCError("UNAUTHORIZED", {
           message: "User doesn't have an Admin F3 Nation role.",
         });
       }
@@ -379,4 +407,4 @@ export const userRouter = createTRPCRouter({
 
       await ctx.db.delete(schema.users).where(eq(schema.users.id, input.id));
     }),
-});
+};

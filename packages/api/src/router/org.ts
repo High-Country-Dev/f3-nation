@@ -1,5 +1,5 @@
 import { revalidatePath } from "next/cache";
-import { TRPCError } from "@trpc/server";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import type { OrgMeta } from "@acme/shared/app/types";
@@ -19,7 +19,7 @@ import { OrgInsertSchema, SortingSchema } from "@acme/validators";
 import { checkHasRoleOnOrg } from "../check-has-role-on-org";
 import { getSortingColumns } from "../get-sorting-columns";
 import { moveAOLocsToNewRegion } from "../lib/move-ao-locs-to-new-region";
-import { adminProcedure, createTRPCRouter, editorProcedure } from "../trpc";
+import { adminProcedure, editorProcedure } from "../shared";
 import { withPagination } from "../with-pagination";
 
 interface Org {
@@ -43,7 +43,7 @@ interface Org {
   parentOrgType: "ao" | "region" | "area" | "sector" | "nation";
 }
 
-export const orgRouter = createTRPCRouter({
+export const orgRouter = {
   all: editorProcedure
     .input(
       z.object({
@@ -56,7 +56,15 @@ export const orgRouter = createTRPCRouter({
         parentOrgIds: z.number().array().optional(),
       }),
     )
-    .query(async ({ ctx, input }) => {
+    .route({
+      method: "GET",
+      path: "/all",
+      tags: ["org"],
+      summary: "List all organizations",
+      description:
+        "Get a paginated list of organizations (regions, AOs, etc.) with optional filtering and sorting",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const org = aliasedTable(schema.orgs, "org");
       const parentOrg = aliasedTable(schema.orgs, "parent_org");
       const pageSize = input?.pageSize ?? 10;
@@ -145,7 +153,15 @@ export const orgRouter = createTRPCRouter({
 
   byId: editorProcedure
     .input(z.object({ id: z.number(), orgType: z.enum(OrgType).optional() }))
-    .query(async ({ ctx, input }) => {
+    .route({
+      method: "GET",
+      path: "/by-id",
+      tags: ["org"],
+      summary: "Get organization by ID",
+      description:
+        "Retrieve detailed information about a specific organization",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const [org] = await ctx.db
         .select()
         .from(schema.orgs)
@@ -160,11 +176,17 @@ export const orgRouter = createTRPCRouter({
 
   crupdate: editorProcedure
     .input(OrgInsertSchema.partial({ id: true, parentId: true }))
-    .mutation(async ({ ctx, input }) => {
+    .route({
+      method: "POST",
+      path: "/crupdate",
+      tags: ["org"],
+      summary: "Create or update organization",
+      description: "Create a new organization or update an existing one",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const orgIdToCheck = input.id ?? input.parentId;
       if (!orgIdToCheck) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
+        throw new ORPCError("BAD_REQUEST", {
           message: "Parent ID or ID is required",
         });
       }
@@ -175,8 +197,7 @@ export const orgRouter = createTRPCRouter({
         roleName: "editor",
       });
       if (!roleCheckResult.success) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
+        throw new ORPCError("UNAUTHORIZED", {
           message: "You are not authorized to update this org",
         });
       }
@@ -201,15 +222,13 @@ export const orgRouter = createTRPCRouter({
         .where(eq(schema.orgs.id, input.id));
 
       if (!existingOrg) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
+        throw new ORPCError("NOT_FOUND", {
           message: "Org not found",
         });
       }
 
       if (existingOrg?.orgType !== input.orgType) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
+        throw new ORPCError("BAD_REQUEST", {
           message: `org to edit is not a ${input.orgType}`,
         });
       }
@@ -245,9 +264,78 @@ export const orgRouter = createTRPCRouter({
         .returning();
       return result;
     }),
+  mine: editorProcedure
+    .route({
+      method: "GET",
+      path: "/mine",
+      tags: ["org"],
+      summary: "Get my organizations",
+      description: "Get all organizations where the current user has roles",
+    })
+    .handler(async ({ context: ctx }) => {
+      if (!ctx.session?.id) {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "You are not authorized to get your orgs",
+        });
+      }
+
+      const orgsQuery = await ctx.db
+        .select()
+        .from(schema.rolesXUsersXOrg)
+        .innerJoin(
+          schema.orgs,
+          eq(schema.rolesXUsersXOrg.orgId, schema.orgs.id),
+        )
+        .innerJoin(
+          schema.roles,
+          eq(schema.rolesXUsersXOrg.roleId, schema.roles.id),
+        )
+        .where(eq(schema.rolesXUsersXOrg.userId, ctx.session.id));
+
+      // Reduce multiple rows per org down to one row per org with possibly multiple roles
+      const orgMap: Record<
+        number,
+        {
+          orgs: (typeof orgsQuery)[number]["orgs"];
+          roles_x_users_x_org: (typeof orgsQuery)[number]["roles_x_users_x_org"];
+          roles: (typeof orgsQuery)[number]["roles"]["name"][];
+        }
+      > = {};
+
+      for (const row of orgsQuery) {
+        const orgId = row.orgs.id;
+        if (!orgMap[orgId]) {
+          orgMap[orgId] = {
+            orgs: row.orgs,
+            roles_x_users_x_org: row.roles_x_users_x_org,
+            roles: [],
+          };
+        }
+        if (row.roles?.name) {
+          orgMap[orgId]?.roles.push(row.roles.name);
+        }
+      }
+
+      return {
+        orgs: Object.values(orgMap).map((org) => ({
+          id: org.orgs.id,
+          name: org.orgs.name,
+          orgType: org.orgs.orgType,
+          parentId: org.orgs.parentId,
+          roles: org.roles,
+        })),
+      };
+    }),
   delete: adminProcedure
     .input(z.object({ id: z.number(), orgType: z.enum(OrgType).optional() }))
-    .mutation(async ({ ctx, input }) => {
+    .route({
+      method: "DELETE",
+      path: "/delete",
+      tags: ["org"],
+      summary: "Delete organization",
+      description: "Soft delete an organization by marking it as inactive",
+    })
+    .handler(async ({ context: ctx, input }) => {
       const roleCheckResult = await checkHasRoleOnOrg({
         orgId: input.id,
         session: ctx.session,
@@ -255,8 +343,7 @@ export const orgRouter = createTRPCRouter({
         roleName: "admin",
       });
       if (!roleCheckResult.success) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
+        throw new ORPCError("UNAUTHORIZED", {
           message: "You are not authorized to delete this org",
         });
       }
@@ -272,31 +359,37 @@ export const orgRouter = createTRPCRouter({
         );
       return { orgId: input.id };
     }),
-  revalidate: adminProcedure.mutation(async ({ ctx }) => {
-    const [nation] = await ctx.db
-      .select({ id: schema.orgs.id })
-      .from(schema.orgs)
-      .where(eq(schema.orgs.orgType, "nation"));
-    if (!nation) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Nation not found",
-      });
-    }
+  revalidate: adminProcedure
+    .route({
+      method: "POST",
+      path: "/revalidate",
+      tags: ["org"],
+      summary: "Revalidate cache",
+      description: "Trigger cache revalidation for the organization data",
+    })
+    .handler(async ({ context: ctx }) => {
+      const [nation] = await ctx.db
+        .select({ id: schema.orgs.id })
+        .from(schema.orgs)
+        .where(eq(schema.orgs.orgType, "nation"));
+      if (!nation) {
+        throw new ORPCError("NOT_FOUND", {
+          message: "Nation not found",
+        });
+      }
 
-    const roleCheckResult = await checkHasRoleOnOrg({
-      orgId: nation.id,
-      session: ctx.session,
-      db: ctx.db,
-      roleName: "admin",
-    });
-    if (!roleCheckResult.success) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "You are not authorized to revalidate this Nation",
+      const roleCheckResult = await checkHasRoleOnOrg({
+        orgId: nation.id,
+        session: ctx.session,
+        db: ctx.db,
+        roleName: "admin",
       });
-    }
+      if (!roleCheckResult.success) {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "You are not authorized to revalidate this Nation",
+        });
+      }
 
-    revalidatePath("/");
-  }),
-});
+      revalidatePath("/");
+    }),
+};

@@ -1,34 +1,25 @@
-import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
+import { os } from "@orpc/server";
 
-import type { AppRouter } from "./root";
-import { appRouter } from "./root";
-import { createCallerFactory, createTRPCContext } from "./trpc";
+import { API_PREFIX_V1 } from "@acme/shared/app/constants";
 
-/**
- * Create a server-side caller for the tRPC API
- * @example
- * const trpc = createCaller(createContext);
- * const res = await trpc.post.all();
- *       ^? Post[]
- */
-const createCaller = createCallerFactory(appRouter);
+import { apiKeyRouter } from "./router/api-key";
+import { eventRouter } from "./router/event";
+import { eventTypeRouter } from "./router/event-type";
+import { locationRouter } from "./router/location";
+import { mapRouter } from "./router/map/index";
+import { orgRouter } from "./router/org";
+import { pingRouter } from "./router/ping";
+import { requestRouter } from "./router/request";
+import { userRouter } from "./router/user";
 
-/**
- * Inference helpers for input types
- * @example
- * type PostByIdInput = RouterInputs['post']['byId']
- *      ^? { id: number }
- **/
-type RouterInputs = inferRouterInputs<AppRouter>;
-
-/**
- * Inference helpers for output types
- * @example
- * type AllPostsOutput = RouterOutputs['post']['all']
- *      ^? Post[]
- **/
-type RouterOutputs = inferRouterOutputs<AppRouter>;
-
-export { openApiDocument } from "./openApi";
-export { appRouter, createCaller, createTRPCContext };
-export type { AppRouter, RouterInputs, RouterOutputs };
+export const router = os.prefix(API_PREFIX_V1).router({
+  apiKey: os.prefix("/api-key").router(apiKeyRouter),
+  event: os.prefix("/event").router(eventRouter),
+  eventType: os.prefix("/event-type").router(eventTypeRouter),
+  ping: os.router(pingRouter),
+  location: os.prefix("/location").router(locationRouter),
+  map: os.prefix("/map").router(mapRouter),
+  org: os.prefix("/org").router(orgRouter),
+  request: os.prefix("/request").router(requestRouter),
+  user: os.prefix("/user").router(userRouter),
+});

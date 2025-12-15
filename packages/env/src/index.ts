@@ -1,6 +1,17 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+// Only override DATABASE_URL from --url flag if in non-production (i.e., development or test) environment
+
+const nodeEnv = process.env.NODE_ENV || "development";
+if (nodeEnv !== "production") {
+  const args = process.argv as string[] | undefined;
+  const urlFlagIndex = args?.indexOf("--url") ?? -1;
+  if (urlFlagIndex !== -1 && args?.[urlFlagIndex + 1]) {
+    process.env.DATABASE_URL = args?.[urlFlagIndex + 1];
+  }
+}
+
 export const env = createEnv({
   server: {
     AUTH_SECRET:
@@ -23,7 +34,8 @@ export const env = createEnv({
     NOTIFY_WEBHOOK_URLS_COMMA_SEPARATED: z.string().optional(),
   },
   client: {
-    NEXT_PUBLIC_URL: z.string().min(1),
+    NEXT_PUBLIC_API_URL: z.string().min(1),
+    NEXT_PUBLIC_MAP_URL: z.string().min(1),
     NEXT_PUBLIC_CHANNEL: z.enum([
       "local",
       "ci",
@@ -34,7 +46,8 @@ export const env = createEnv({
     ]),
   },
   experimental__runtimeEnv: {
-    NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_MAP_URL: process.env.NEXT_PUBLIC_MAP_URL,
     NEXT_PUBLIC_CHANNEL: process.env.NEXT_PUBLIC_CHANNEL,
   },
   skipValidation: !!process.env.CI || !!process.env.SKIP_ENV_VALIDATION,
