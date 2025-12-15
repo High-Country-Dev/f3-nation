@@ -41,8 +41,39 @@ const handler = new RPCHandler(router, {
   ],
 });
 
-const _handler = new OpenAPIHandler(router, {
-  plugins: [new CORSPlugin(), new RequestHeadersPlugin()],
+const openAPIHandler = new OpenAPIHandler(router, {
+  plugins: [
+    new CORSPlugin({
+      origin: (origin) => {
+        const allowedOrigins = [];
+        if (isProductionNodeEnv) {
+          if (origin.endsWith(".f3nation.com")) {
+            allowedOrigins.push(origin);
+          }
+        } else {
+          if (origin.endsWith(".f3nation.test")) {
+            allowedOrigins.push(origin);
+          }
+          allowedOrigins.push("http://localhost:3000", "http://127.0.0.1:3000");
+        }
+
+        return allowedOrigins;
+      },
+      allowMethods: [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "HEAD",
+        "OPTIONS",
+      ],
+      allowHeaders: ["Content-Type", "Authorization"],
+      maxAge: 600,
+      credentials: true,
+    }),
+    new RequestHeadersPlugin(),
+  ],
   interceptors: [
     onError((error) => {
       console.error(error);
@@ -65,11 +96,22 @@ async function handleRequest(request: Request) {
     return Response.redirect(`${baseUrl}/docs`);
   }
 
-  // Handle the request
+  // Try OpenAPI handler first for REST-style calls
+  // const { response: openApiResponse } = await openAPIHandler.handle(request, {
+  //   prefix: "/",
+  // });
+
+  // if (openApiResponse) {
+  //   console.log("openApiResponse");
+  //   return openApiResponse;
+  // }
+
+  // Fall back to RPC handler for oRPC client calls
   const { response } = await handler.handle(request, {
     prefix: "/",
   });
 
+  console.log("orpc response");
   return response ?? new Response("Not found", { status: 404 });
 }
 

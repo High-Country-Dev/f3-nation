@@ -56,7 +56,6 @@ export const orgRouter = {
         parentOrgIds: z.number().array().optional(),
       }),
     )
-    .route({ method: "GET" })
     .handler(async ({ context: ctx, input }) => {
       const org = aliasedTable(schema.orgs, "org");
       const parentOrg = aliasedTable(schema.orgs, "parent_org");
