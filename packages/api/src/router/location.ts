@@ -164,7 +164,7 @@ export const locationRouter = {
         .where(eq(schema.locations.id, input.id))
         .leftJoin(regionOrg, eq(regionOrg.id, schema.locations.orgId));
 
-      return location;
+      return { location: location ?? null };
     }),
   crupdate: editorProcedure
     .input(LocationInsertSchema.partial({ id: true }))
@@ -213,7 +213,7 @@ export const locationRouter = {
           set: locationToCrupdate,
         })
         .returning();
-      return result;
+      return { location: result ?? null };
     }),
   delete: adminProcedure
     .input(z.object({ id: z.number() }))

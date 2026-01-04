@@ -42,12 +42,13 @@ export default function AdminRequestsModal({
   const [status, setStatus] = useState<"approving" | "rejecting" | "idle">(
     "idle",
   );
-  const { data: request } = useQuery(
+  const { data: requestResponse } = useQuery(
     orpc.request.byId.queryOptions({
       input: { id: requestData.id },
       enabled: gte(requestData.id, 0),
     }),
   );
+  const request = requestResponse?.request;
   const form = useUpdateLocationForm({
     defaultValues: { id: request?.id ?? uuid() },
   });

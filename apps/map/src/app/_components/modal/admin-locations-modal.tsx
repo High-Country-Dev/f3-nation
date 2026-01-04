@@ -60,12 +60,13 @@ export default function AdminLocationsModal({
 }: {
   data: DataType[ModalType.ADMIN_LOCATIONS];
 }) {
-  const { data: location } = useQuery(
+  const { data: locationResponse } = useQuery(
     orpc.location.byId.queryOptions({
       input: { id: data.id ?? -1 },
       enabled: gte(data.id, 0),
     }),
   );
+  const location = locationResponse?.location;
   const { data: regions } = useQuery(
     orpc.org.all.queryOptions({ input: { orgTypes: ["region"] } }),
   );

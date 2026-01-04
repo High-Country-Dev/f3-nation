@@ -56,12 +56,13 @@ export default function AdminEventTypesModal({
 }: {
   data: DataType[ModalType.ADMIN_EVENT_TYPES];
 }) {
-  const { data: eventType } = useQuery(
+  const { data: eventTypeResponse } = useQuery(
     orpc.eventType.byId.queryOptions({
       input: { id: data.id ?? -1 },
       enabled: gte(data.id, 0),
     }),
   );
+  const eventType = eventTypeResponse?.eventType;
   const { data: regions } = useQuery(
     orpc.org.all.queryOptions({ input: { orgTypes: ["region"] } }),
   );

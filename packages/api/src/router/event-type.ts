@@ -164,7 +164,7 @@ export const eventTypeRouter = {
           ),
         );
 
-      return eventTypes;
+      return { eventTypes: eventTypes ?? null };
     }),
   byId: protectedProcedure
     .input(z.object({ id: z.coerce.number() }))
@@ -187,7 +187,7 @@ export const eventTypeRouter = {
         });
       }
 
-      return result;
+      return { eventType: result ?? null };
     }),
   crupdate: editorProcedure
     .input(EventTypeInsertSchema)
@@ -253,7 +253,7 @@ export const eventTypeRouter = {
         })
         .returning();
 
-      return result;
+      return { eventType: result ?? null };
     }),
   delete: editorProcedure
     .input(z.object({ id: z.number() }))

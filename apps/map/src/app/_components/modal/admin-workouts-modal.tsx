@@ -94,12 +94,13 @@ export default function AdminWorkoutsModal({
   const { data: aos } = useQuery(
     orpc.org.all.queryOptions({ input: { orgTypes: ["ao"] } }),
   );
-  const { data: event } = useQuery(
+  const { data: eventResponse } = useQuery(
     orpc.event.byId.queryOptions({
       input: { id: data.id ?? -1 },
       enabled: gte(data.id, 0),
     }),
   );
+  const event = eventResponse?.event;
   const { data: eventTypes } = useQuery(
     orpc.eventType.all.queryOptions({
       input: {

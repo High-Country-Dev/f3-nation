@@ -3,12 +3,6 @@ import dayjs from "dayjs";
 import omit from "lodash/omit";
 import { z } from "zod";
 
-import type { DayOfWeek, OrgType } from "@acme/shared/app/enums";
-import type { EventMeta, UpdateRequestMeta } from "@acme/shared/app/types";
-import type {
-  DeleteRequestResponse,
-  UpdateRequestResponse,
-} from "@acme/validators";
 import {
   aliasedTable,
   and,
@@ -19,15 +13,21 @@ import {
   or,
   schema,
 } from "@acme/db";
+import type { DayOfWeek, OrgType, UserRole } from "@acme/shared/app/enums";
 import { UpdateRequestStatus } from "@acme/shared/app/enums";
 import { arrayOrSingle, parseSorting } from "@acme/shared/app/functions";
+import type { EventMeta, UpdateRequestMeta } from "@acme/shared/app/types";
+import type {
+  DeleteRequestResponse,
+  UpdateRequestResponse,
+} from "@acme/validators";
 import { DeleteRequestSchema, RequestInsertSchema } from "@acme/validators";
 
-import type { Context } from "../shared";
 import { checkHasRoleOnOrg } from "../check-has-role-on-org";
 import { getEditableOrgIdsForUser } from "../get-editable-org-ids";
 import { getSortingColumns } from "../get-sorting-columns";
 import { notifyMapChangeRequest } from "../services/map-request-notification";
+import type { Context } from "../shared";
 import { editorProcedure, protectedProcedure } from "../shared";
 import { withPagination } from "../with-pagination";
 
@@ -223,7 +223,7 @@ export const requestRouter = {
         .select()
         .from(schema.updateRequests)
         .where(eq(schema.updateRequests.id, input.id));
-      return request;
+      return { request: request ?? null };
     }),
   canDeleteEvent: protectedProcedure
     .input(z.object({ eventId: z.coerce.number() }))
@@ -246,7 +246,7 @@ export const requestRouter = {
             eq(schema.updateRequests.status, "pending"),
           ),
         );
-      return !!request;
+      return { canDelete: !!request };
     }),
   canEditRegions: protectedProcedure
     .input(z.object({ orgIds: z.array(z.number()) }))
@@ -259,27 +259,39 @@ export const requestRouter = {
         "Check if the current user has editor permissions for specified organizations",
     })
     .handler(async ({ context: ctx, input }) => {
+      let results: {
+        success: boolean;
+        mode:
+          | "public"
+          | "org-admin"
+          | "mtndev-override"
+          | "direct-permission"
+          | "no-permission";
+        orgId: number | null;
+        roleName: UserRole | null;
+      }[] = [];
+
       const session = ctx.session;
       if (!session) {
-        return input.orgIds.map((orgId) => ({
+        results = input.orgIds.map((orgId) => ({
           success: false,
           mode: "public",
           orgId,
-          roleName: "editor",
+          roleName: "editor" as const,
         }));
+      } else {
+        results = await Promise.all(
+          input.orgIds.map((orgId) =>
+            checkHasRoleOnOrg({
+              orgId,
+              session,
+              db: ctx.db,
+              roleName: "editor" as const,
+            }),
+          ),
+        );
       }
-
-      const results = await Promise.all(
-        input.orgIds.map((orgId) =>
-          checkHasRoleOnOrg({
-            orgId,
-            session,
-            db: ctx.db,
-            roleName: "editor",
-          }),
-        ),
-      );
-      return results;
+      return { results };
     }),
   submitDeleteRequest: protectedProcedure
     .input(DeleteRequestSchema)
@@ -332,7 +344,7 @@ export const requestRouter = {
           ...input,
           reviewedBy: ctx.session?.user?.email,
         });
-        return result;
+        return { status: result.status, deleteRequest: result.deleteRequest };
       }
 
       const [request] = await ctx.db
@@ -447,7 +459,7 @@ export const requestRouter = {
           ...input,
           reviewedBy: ctx.session?.user?.email,
         });
-        return result;
+        return { status: result.status, updateRequest: result.updateRequest };
       }
 
       const updateRequest: typeof schema.updateRequests.$inferInsert = {
@@ -508,7 +520,7 @@ export const requestRouter = {
         ...input,
         reviewedBy: ctx.session?.user?.email,
       });
-      return result;
+      return { status: result.status, deleteRequest: result.deleteRequest };
     }),
   validateSubmissionByAdmin: editorProcedure
     .input(RequestInsertSchema)

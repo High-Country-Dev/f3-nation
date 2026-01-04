@@ -50,12 +50,13 @@ export default function AdminNationsModal({
 }: {
   data: DataType[ModalType.ADMIN_NATIONS];
 }) {
-  const { data: nation } = useQuery(
+  const { data: nationResponse } = useQuery(
     orpc.org.byId.queryOptions({
       input: { id: data.id ?? -1, orgType: "nation" },
       enabled: gte(data.id, 0),
     }),
   );
+  const nation = nationResponse?.org;
   const router = useRouter();
 
   const [isSubmitting, setIsSubmitting] = useState(false);

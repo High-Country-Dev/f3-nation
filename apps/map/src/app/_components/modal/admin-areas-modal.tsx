@@ -55,12 +55,13 @@ export default function AdminAreasModal({
 }: {
   data: DataType[ModalType.ADMIN_AREAS];
 }) {
-  const { data: area } = useQuery(
+  const { data: areaResponse } = useQuery(
     orpc.org.byId.queryOptions({
       input: { id: data.id ?? -1, orgType: "area" },
       enabled: gte(data.id, 0),
     }),
   );
+  const area = areaResponse?.org;
   const { data: sectors } = useQuery(
     orpc.org.all.queryOptions({ input: { orgTypes: ["sector"] } }),
   );
