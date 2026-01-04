@@ -56,12 +56,13 @@ export default function AdminSectorsModal({
 }: {
   data: DataType[ModalType.ADMIN_SECTORS];
 }) {
-  const { data: sector } = useQuery(
+  const { data: sectorResponse } = useQuery(
     orpc.org.byId.queryOptions({
       input: { id: data.id ?? -1, orgType: "sector" },
       enabled: gte(data.id, 0),
     }),
   );
+  const sector = sectorResponse?.org;
   const { data: nations } = useQuery(
     orpc.org.all.queryOptions({ input: { orgTypes: ["nation"] } }),
   );

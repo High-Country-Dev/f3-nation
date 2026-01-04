@@ -52,12 +52,13 @@ export default function AdminAOsModal({
 }: {
   data: DataType[ModalType.ADMIN_AOS];
 }) {
-  const { data: ao } = useQuery(
+  const { data: aoResponse } = useQuery(
     orpc.org.byId.queryOptions({
       input: { id: data.id ?? -1, orgType: "ao" },
       enabled: gte(data.id, 0),
     }),
   );
+  const ao = aoResponse?.org;
   const { data: regions } = useQuery(
     orpc.org.all.queryOptions({ input: { orgTypes: ["region"] } }),
   );

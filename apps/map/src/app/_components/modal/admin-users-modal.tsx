@@ -62,7 +62,7 @@ export default function UserModal({
     }),
   );
 
-  const user = userResponse?.user ?? null;
+  const user = userResponse?.user;
   const hasPiiAccess = userResponse?.includePii ?? false;
   const router = useRouter();
 
