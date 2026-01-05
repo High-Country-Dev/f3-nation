@@ -19,7 +19,7 @@ export default defineConfig({
       },
     },
     exclude: [
-      "**/tests/**/*.spec.ts", // Exclude Playwright tests
+      "**/e2e/**/*.spec.ts", // Exclude Playwright e2e tests
       "**/node_modules/**",
       "**/dist/**",
       "**/cypress/**",

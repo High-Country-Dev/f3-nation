@@ -458,4 +458,56 @@ export const mapLocationRouter = os.router({
 
       return { lookup };
     }),
+  getAOsInRegion: protectedProcedure
+    .input(z.object({ regionId: z.number() }))
+    .route({
+      method: "GET",
+      path: "/aos-in-region",
+      tags: ["map.location"],
+      summary: "Get AOs in region",
+      description: "Get a list of AOs in a region",
+    })
+    .handler(async ({ context: ctx, input }) => {
+      const aos = await ctx.db
+        .select({
+          id: schema.orgs.id,
+          parentId: schema.orgs.parentId,
+          name: schema.orgs.name,
+          orgType: schema.orgs.orgType,
+          defaultLocationId: schema.orgs.defaultLocationId,
+          description: schema.orgs.description,
+          isActive: schema.orgs.isActive,
+          logoUrl: schema.orgs.logoUrl,
+          website: schema.orgs.website,
+          email: schema.orgs.email,
+          twitter: schema.orgs.twitter,
+          facebook: schema.orgs.facebook,
+          instagram: schema.orgs.instagram,
+          lastAnnualReview: schema.orgs.lastAnnualReview,
+          meta: schema.orgs.meta,
+          created: schema.orgs.created,
+          workouts: sql<string[]>`COALESCE(
+            ARRAY_AGG(DISTINCT ${schema.events.name})
+            FILTER (WHERE ${schema.events.name} IS NOT NULL),
+            ARRAY[]::text[]
+          )`,
+        })
+        .from(schema.orgs)
+        .leftJoin(
+          schema.events,
+          and(
+            eq(schema.events.orgId, schema.orgs.id),
+            eq(schema.events.isActive, true),
+          ),
+        )
+        .where(
+          and(
+            eq(schema.orgs.parentId, input.regionId),
+            eq(schema.orgs.orgType, "ao"),
+            eq(schema.orgs.isActive, true),
+          ),
+        )
+        .groupBy(schema.orgs.id);
+      return { aos };
+    }),
 });

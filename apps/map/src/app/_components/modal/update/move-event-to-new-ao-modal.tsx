@@ -1,0 +1,62 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
+import type { MoveEventToNewAOType } from "@acme/validators/request-schemas";
+import { Form } from "@acme/ui/form";
+import { MoveEventToNewAOSchema } from "@acme/validators/request-schemas";
+
+import type { DataType, ModalType } from "~/utils/store/modal";
+import { FormDebugData } from "~/app/_components/forms/dev-debug-component";
+import { ContactDetailsForm } from "~/app/_components/forms/form-inputs/contact-details-form";
+import { ExistingLocationPickerForm } from "~/app/_components/forms/form-inputs/existing-location-picker-form";
+import { BaseModal } from "~/app/_components/modal/base-modal";
+import { isProd } from "~/trpc/util";
+import { vanillaApi } from "~/trpc/vanilla";
+import { AODetailsForm } from "../../forms/form-inputs/ao-details-form";
+import { LocationDetailsForm } from "../../forms/form-inputs/location-details-form";
+import { RegionSelector } from "../../forms/form-inputs/region-selector";
+import { SubmitSection } from "../../forms/submit-section";
+
+export const MoveEventToNewAoModal = ({
+  data,
+}: {
+  data: DataType[ModalType.MOVE_EVENT_TO_NEW_AO];
+}) => {
+  const form = useForm<MoveEventToNewAOType>({
+    resolver: zodResolver(MoveEventToNewAOSchema),
+    defaultValues: data,
+  });
+
+  const formNewLocationId = form.watch("newLocationId");
+
+  return (
+    <BaseModal title="Move Event to New AO">
+      <Form {...form}>
+        <form className="w-[inherit] overflow-x-hidden p-0.5">
+          {!isProd && <FormDebugData />}
+
+          <div>
+            <p>Moving Event ID: {data?.originalEventId}</p>
+            <p>From AO ID: {data?.originalAoId}</p>
+            <p>Original Region ID: {data?.originalRegionId}</p>
+          </div>
+
+          <RegionSelector<MoveEventToNewAOType>
+            label="Destination Region:"
+            fieldName="newRegionId"
+          />
+          <AODetailsForm<MoveEventToNewAOType> />
+          <ExistingLocationPickerForm<MoveEventToNewAOType> region="newRegion" />
+          {!formNewLocationId && <LocationDetailsForm<MoveEventToNewAOType> />}
+          <ContactDetailsForm<MoveEventToNewAOType> />
+          <SubmitSection<MoveEventToNewAOType>
+            mutationFn={(values) =>
+              vanillaApi.request.submitMoveEventToNewAoRequest(values)
+            }
+            text="Move Event to New AO"
+          />
+        </form>
+      </Form>
+    </BaseModal>
+  );
+};

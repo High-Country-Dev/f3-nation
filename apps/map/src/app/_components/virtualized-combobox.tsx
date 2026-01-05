@@ -30,6 +30,7 @@ interface Option<T> {
   disabled?: boolean;
   labelComponent?: React.ReactNode;
   data?: T;
+  pinned?: boolean;
 }
 
 interface VirtualizedCommandProps<T> {
@@ -54,10 +55,14 @@ const VirtualizedCommand = <T,>({
 
   const sortedFilteredOptions = useMemo(() => {
     return filteredOptions.sort((a, b) => {
-      if (selectedOptions.includes(a.value)) {
+      // Pinned options always come first
+      if (a.pinned && !b.pinned) return -1;
+      if (b.pinned && !a.pinned) return 1;
+      // Then selected options
+      if (selectedOptions.includes(a.value) && !selectedOptions.includes(b.value)) {
         return -1;
       }
-      if (selectedOptions.includes(b.value)) {
+      if (selectedOptions.includes(b.value) && !selectedOptions.includes(a.value)) {
         return 1;
       }
       return 0;
