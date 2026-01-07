@@ -277,11 +277,16 @@ export const userRouter = {
         // For updates with PII access, only include PII fields that are actually provided
         updateSet = {
           ...nonPiiData,
-          ...((_email !== undefined && _email !== "") && { email: _email }),
-          ...((_phone !== undefined && _phone !== "") && { phone: _phone }),
-          ...((_emergencyContact !== undefined && _emergencyContact !== "") && { emergencyContact: _emergencyContact }),
-          ...((_emergencyPhone !== undefined && _emergencyPhone !== "") && { emergencyPhone: _emergencyPhone }),
-          ...((_emergencyNotes !== undefined && _emergencyNotes !== "") && { emergencyNotes: _emergencyNotes }),
+          ...(_email !== undefined && _email !== "" && { email: _email }),
+          ...(_phone !== undefined && _phone !== "" && { phone: _phone }),
+          ...(_emergencyContact !== undefined &&
+            _emergencyContact !== "" && {
+              emergencyContact: _emergencyContact,
+            }),
+          ...(_emergencyPhone !== undefined &&
+            _emergencyPhone !== "" && { emergencyPhone: _emergencyPhone }),
+          ...(_emergencyNotes !== undefined &&
+            _emergencyNotes !== "" && { emergencyNotes: _emergencyNotes }),
         };
       } else {
         // For new users, include all fields
