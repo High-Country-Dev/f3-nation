@@ -92,8 +92,8 @@ export default function AdminGrantAccessModal({
     orpc.user.byId.queryOptions({
       input: {
         id: hasValidUserId ? userIdToFetch : -1,
-        // Must be false to avoid crashes
-        includePii: false,
+        // Server checks if current user is admin for the target user's orgs
+        includePii: true,
       },
       enabled: hasValidUserId,
       retry: false,
@@ -106,7 +106,7 @@ export default function AdminGrantAccessModal({
     orpc.user.byEmail.queryOptions({
       input: {
         email: emailToSearch ?? "",
-        includePii: false,
+        includePii: true,
       },
       enabled: isValidEmail(emailValue) && !!emailToSearch,
     }),
@@ -358,9 +358,11 @@ export default function AdminGrantAccessModal({
                         <div className="relative">
                           <Input
                             placeholder={
-                              data?.userId && !field.value
-                                ? "Email not available"
-                                : "user@example.com"
+                              data?.userId
+                                ? field.value
+                                  ? userByIdData?.user?.email ?? ""
+                                  : "Email not available"
+                                : ""
                             }
                             type="email"
                             disabled={!!data?.userId}
