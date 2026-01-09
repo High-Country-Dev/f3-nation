@@ -146,6 +146,10 @@ export const routes = {
     __path: "/",
     __auth: "none",
   },
+  nearby: {
+    __path: "/nearby",
+    __auth: "none",
+  },
   admin: {
     __path: "/admin",
     __auth: "editor",
