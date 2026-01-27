@@ -101,20 +101,26 @@ export default function AdminWorkoutsModal({
     }),
   );
   const event = eventResponse?.event;
-  const { data: eventTypes } = useQuery(
-    orpc.eventType.all.queryOptions({
-      input: {
-        pageSize: 200,
-        orgIds: event?.regions.map((r) => r.regionId),
-      },
-    }),
-  );
   const router = useRouter();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm({
     schema: EventInsertForm,
   });
+
+  // Watch regionId from form to filter event types
+  const formRegionId = form.watch("regionId");
+
+  const { data: eventTypes } = useQuery(
+    orpc.eventType.all.queryOptions({
+      input: {
+        pageSize: 200,
+        // When region is selected: filter to that region's types + Nation types
+        // When no region selected: show all event types (pass undefined to get all)
+        orgIds: formRegionId ? [formRegionId] : undefined,
+      },
+    }),
+  );
 
   useEffect(() => {
     form.reset({
@@ -476,7 +482,12 @@ export default function AdminWorkoutsModal({
                             label: type.name,
                           })) ?? []
                         }
-                        searchPlaceholder="Select event types"
+                        searchPlaceholder={
+                          formRegionId
+                            ? "Select event types"
+                            : "Select a region first"
+                        }
+                        disabled={!formRegionId}
                         onSelect={(value) => {
                           if (!Array.isArray(value)) {
                             toast.error("Invalid event type");
