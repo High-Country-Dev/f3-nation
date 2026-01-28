@@ -154,18 +154,44 @@ describe("Event Router", () => {
   };
 
   describe("all", () => {
-    it("should return all events without filtering", async () => {
-      const client = createTestClient();
-      const result = await client.map.event.all();
+    it("should include events without a location (locationId null)", async () => {
+      const session = await createAdminSession();
+      await mockAuthWithSession(session);
 
-      expect(result).toHaveProperty("events");
-      expect(Array.isArray(result.events)).toBe(true);
-      // Should return events with basic fields
-      if (result.events && result.events.length > 0) {
-        expect(result.events[0]).toHaveProperty("id");
-        expect(result.events[0]).toHaveProperty("name");
-        expect(result.events[0]).toHaveProperty("isActive");
+      const region = await createTestRegion();
+      if (!region) return;
+
+      const ao = await createTestAO(region.id);
+      if (!ao) return;
+
+      // Create an event with no location
+      const [created] = await db
+        .insert(schema.events)
+        .values({
+          name: `No Location Event ${uniqueId()}`,
+          orgId: ao.id,
+          locationId: null,
+          dayOfWeek: "monday",
+          startTime: "0530",
+          isActive: true,
+          highlight: false,
+          startDate: "2026-01-01",
+          isPrivate: false,
+        })
+        .returning();
+
+      if (created) {
+        createdEventIds.push(created.id);
       }
+
+      const client = createTestClient();
+      const result = await client.event.all({
+        pageIndex: 0,
+        pageSize: 50,
+        statuses: ["active"],
+      });
+
+      expect(result.events?.some((e) => e.id === created?.id)).toBe(true);
     });
   });
 

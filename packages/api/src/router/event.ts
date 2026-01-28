@@ -5,7 +5,9 @@ import { z } from "zod";
 import {
   aliasedTable,
   and,
+  asc,
   countDistinct,
+  desc,
   eq,
   ilike,
   inArray,
@@ -15,7 +17,7 @@ import {
 } from "@acme/db";
 import type { AppDb } from "@acme/db/client";
 import { EventCategory, IsActiveStatus } from "@acme/shared/app/enums";
-import { arrayOrSingle } from "@acme/shared/app/functions";
+import { arrayOrSingle, getFullAddress } from "@acme/shared/app/functions";
 import { EventInsertSchema } from "@acme/validators";
 
 import { checkHasRoleOnOrg } from "../check-has-role-on-org";
@@ -24,6 +26,7 @@ import { getEditableOrgIdsForUser } from "../get-editable-org-ids";
 import { emitWebhookEvent } from "../lib/webhook-events";
 import type { Context } from "../shared";
 import { editorProcedure, protectedProcedure } from "../shared";
+import { withPagination } from "../with-pagination";
 
 // Shared filter schema for events (used by both `all` and `count` endpoints)
 const eventFilterSchema = z.object({
@@ -46,6 +49,17 @@ const eventFilterSchema = z.object({
 
 type EventFilterInput = z.infer<typeof eventFilterSchema>;
 
+// Extended schema with pagination and sorting for the `all` endpoint
+const eventAllInputSchema = eventFilterSchema
+  .extend({
+    pageIndex: z.coerce.number().optional(),
+    pageSize: z.coerce.number().optional(),
+    sorting: z
+      .array(z.object({ id: z.string(), desc: z.coerce.boolean() }))
+      .optional(),
+  })
+  .optional();
+  
 // Aliased tables used across event queries
 const regionOrg = aliasedTable(schema.orgs, "region_org");
 const parentOrg = aliasedTable(schema.orgs, "parent_org");
@@ -135,10 +149,8 @@ function buildEventBaseQuery(params: { db: AppDb; where: SQL | undefined }) {
   return db
     .select({ count: countDistinct(schema.events.id) })
     .from(schema.events)
-    .innerJoin(
-      schema.locations,
-      eq(schema.locations.id, schema.events.locationId),
-    )
+    // Must be a LEFT JOIN so events without a location still appear in admin lists.
+    .leftJoin(schema.locations, eq(schema.locations.id, schema.events.locationId))
     .leftJoin(
       parentOrg,
       and(eq(parentOrg.orgType, "ao"), eq(parentOrg.id, schema.events.orgId)),
@@ -180,6 +192,185 @@ async function getEventCount(params: {
 }
 
 export const eventRouter = {
+  all: protectedProcedure
+    .input(eventAllInputSchema)
+    .route({
+      method: "GET",
+      path: "/",
+      tags: ["event"],
+      summary: "List all events",
+      description:
+        "Get a paginated list of workout events with optional filtering and sorting",
+    })
+    .handler(async ({ context: ctx, input }) => {
+      const limit = input?.pageSize ?? 10;
+      const offset = (input?.pageIndex ?? 0) * limit;
+      const usePagination =
+        input?.pageIndex !== undefined && input?.pageSize !== undefined;
+
+      // Resolve editable org IDs for "onlyMine" filter
+      const editableResult = await resolveEditableOrgIds({
+        ctx,
+        onlyMine: input?.onlyMine,
+      });
+
+      // If user has no access, return empty result
+      if (editableResult === null) {
+        return { events: [], totalCount: 0 };
+      }
+
+      const { editableOrgIds, isNationAdmin } = editableResult;
+
+      const where = buildEventWhereClause({
+        input,
+        editableOrgIds,
+        isNationAdmin,
+      });
+
+      const sortedColumns = input?.sorting?.map((sorting) => {
+        const direction = sorting.desc ? desc : asc;
+        switch (sorting.id) {
+          case "regions":
+            return direction(regionOrg.name);
+          case "parent":
+            return direction(parentOrg.name);
+          case "status":
+            return direction(schema.events.isActive);
+          case "dayOfWeek":
+            return direction(schema.events.dayOfWeek);
+          case "created":
+            return direction(schema.events.created);
+          default:
+            return direction(schema.events.id);
+        }
+      }) ?? [desc(schema.events.id)];
+
+      const select = {
+        id: schema.events.id,
+        name: schema.events.name,
+        description: schema.events.description,
+        isActive: schema.events.isActive,
+        isPrivate: schema.events.isPrivate,
+        parent: parentOrg.name,
+        locationId: schema.events.locationId,
+        startDate: schema.events.startDate,
+        dayOfWeek: schema.events.dayOfWeek,
+        startTime: schema.events.startTime,
+        endTime: schema.events.endTime,
+        email: schema.events.email,
+        created: schema.events.created,
+        locationName: schema.locations.name,
+        locationAddress: schema.locations.addressStreet,
+        locationAddress2: schema.locations.addressStreet2,
+        locationCity: schema.locations.addressCity,
+        locationState: schema.locations.addressState,
+        locationZip: schema.locations.addressZip,
+        parents: sql<{ aoId: number; aoName: string }[]>`COALESCE(
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'parentId', ${parentOrg.id}, 
+            'parentName', ${parentOrg.name}
+          )
+        ) 
+        FILTER (
+          WHERE ${parentOrg.id} IS NOT NULL
+        ), 
+        '[]'
+      )`,
+        regions: sql<{ regionId: number; regionName: string }[]>`COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'regionId', ${regionOrg.id}, 
+              'regionName', ${regionOrg.name}
+            )
+          ) 
+          FILTER (
+            WHERE ${regionOrg.id} IS NOT NULL
+          ), 
+          '[]'
+        )`,
+        eventTypes: sql<
+          {
+            eventTypeId: number;
+            eventTypeName: string;
+            eventCategory: string;
+          }[]
+        >`COALESCE(
+            json_agg(
+              DISTINCT jsonb_build_object(
+                'eventTypeId', ${schema.eventTypes.id},
+                'eventTypeName', ${schema.eventTypes.name},
+                'eventCategory', ${schema.eventTypes.eventCategory}
+              )
+            )
+            FILTER (
+              WHERE ${schema.eventTypes.id} IS NOT NULL
+            ),
+            '[]'
+          )`,
+      };
+
+      const totalCount = await getEventCount({ db: ctx.db, where });
+
+      // Build the full query with select, joins, and groupBy
+      const query = ctx.db
+        .select(select)
+        .from(schema.events)
+        // Must be a LEFT JOIN so events without a location still appear in admin lists.
+        .leftJoin(
+          schema.locations,
+          eq(schema.locations.id, schema.events.locationId),
+        )
+        .leftJoin(
+          parentOrg,
+          and(
+            eq(parentOrg.orgType, "ao"),
+            eq(parentOrg.id, schema.events.orgId),
+          ),
+        )
+        .leftJoin(
+          regionOrg,
+          and(
+            eq(regionOrg.orgType, "region"),
+            or(
+              eq(regionOrg.id, schema.locations.orgId),
+              eq(regionOrg.id, schema.events.orgId),
+              eq(regionOrg.id, parentOrg.parentId),
+            ),
+          ),
+        )
+        .leftJoin(
+          schema.eventsXEventTypes,
+          eq(schema.eventsXEventTypes.eventId, schema.events.id),
+        )
+        .leftJoin(
+          schema.eventTypes,
+          eq(schema.eventTypes.id, schema.eventsXEventTypes.eventTypeId),
+        )
+        .where(where)
+        .groupBy(
+          schema.events.id,
+          parentOrg.id,
+          regionOrg.id,
+          schema.locations.name,
+          schema.locations.addressStreet,
+          schema.locations.addressStreet2,
+          schema.locations.addressCity,
+          schema.locations.addressState,
+          schema.locations.addressZip,
+        );
+
+      const events = usePagination
+        ? await withPagination(query.$dynamic(), sortedColumns, offset, limit)
+        : await query.orderBy(...sortedColumns);
+
+      const eventsWithLocation = events.map((event) => ({
+        ...event,
+        location: getFullAddress(event),
+      }));
+
+      return { events: eventsWithLocation, totalCount };
+    }),
   count: protectedProcedure
     .input(eventFilterSchema.optional())
     .route({
