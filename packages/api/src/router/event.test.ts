@@ -188,7 +188,23 @@ describe("Event Router", () => {
       }
 
       const client = createTestClient();
-      const result = await client.event.all({
+      const result = await client.map.event.all();
+
+      expect(result).toHaveProperty("events");
+      expect(Array.isArray(result.events)).toBe(true);
+      // Should return events with basic fields
+      if (result.events && result.events.length > 0) {
+        expect(result.events[0]).toHaveProperty("id");
+        expect(result.events[0]).toHaveProperty("name");
+        expect(result.events[0]).toHaveProperty("isActive");
+      }
+    });
+  });
+
+  describe("map.event.all", () => {
+    it("should return a list of events with filtering", async () => {
+      const client = createTestClient();
+      const result = await client.map.event.all({
         pageIndex: 0,
         pageSize: 50,
         statuses: ["active"],
