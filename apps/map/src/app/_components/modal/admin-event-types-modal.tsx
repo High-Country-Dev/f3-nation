@@ -223,6 +223,7 @@ export default function AdminEventTypesModal({
                         }
                       }}
                       isMulti={false}
+                      hideClearButton
                     />
                     <FormMessage />
                   </FormItem>
