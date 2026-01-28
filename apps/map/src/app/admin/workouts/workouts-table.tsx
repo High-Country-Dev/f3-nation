@@ -46,7 +46,7 @@ export const WorkoutsTable = () => {
   const [onlyMine, setOnlyMine] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { data: workouts } = useQuery(
-    orpc.event.all.queryOptions({
+    orpc.map.event.all.queryOptions({
       input: {
         pageIndex: pagination.pageIndex,
         pageSize: pagination.pageSize,
@@ -108,9 +108,9 @@ export const WorkoutsTable = () => {
   );
 };
 
-const columns: TableOptions<
-  RouterOutputs["event"]["all"]["events"][number]
->["columns"] = [
+type WorkoutEvent = RouterOutputs["map"]["event"]["all"]["events"][number];
+
+const columns: TableOptions<WorkoutEvent>["columns"] = [
   {
     accessorKey: "name",
     meta: { name: "Event Name" },
@@ -123,9 +123,11 @@ const columns: TableOptions<
     header: Header,
     cell: (cell) => (
       <Cell {...cell}>
-        {cell.row.original.regions
-          .map((region) => region.regionName)
-          .join(", ")}
+        {Array.isArray(cell.row.original.regions)
+          ? cell.row.original.regions
+              .map((region: { regionName: string }) => region.regionName)
+              .join(", ")
+          : ""}
       </Cell>
     ),
   },
@@ -136,7 +138,9 @@ const columns: TableOptions<
     cell: (cell) => (
       <Cell {...cell}>
         {/* {cell.row.original.parents.map((ao) => ao.aoName).join(", ")} */}
-        {cell.row.original.parent}
+        {typeof cell.row.original.parent === "string"
+          ? cell.row.original.parent
+          : ""}
       </Cell>
     ),
   },

@@ -154,9 +154,25 @@ describe("Event Router", () => {
   };
 
   describe("all", () => {
-    it("should return a list of events", async () => {
+    it("should return all events without filtering", async () => {
       const client = createTestClient();
-      const result = await client.event.all({
+      const result = await client.map.event.all();
+
+      expect(result).toHaveProperty("events");
+      expect(Array.isArray(result.events)).toBe(true);
+      // Should return events with basic fields
+      if (result.events && result.events.length > 0) {
+        expect(result.events[0]).toHaveProperty("id");
+        expect(result.events[0]).toHaveProperty("name");
+        expect(result.events[0]).toHaveProperty("isActive");
+      }
+    });
+  });
+
+  describe("map.event.all", () => {
+    it("should return a list of events with filtering", async () => {
+      const client = createTestClient();
+      const result = await client.map.event.all({
         pageIndex: 0,
         pageSize: 10,
       });
@@ -168,12 +184,12 @@ describe("Event Router", () => {
 
     it("should paginate results correctly", async () => {
       const client = createTestClient();
-      const page1 = await client.event.all({
+      const page1 = await client.map.event.all({
         pageIndex: 0,
         pageSize: 2,
       });
 
-      const page2 = await client.event.all({
+      const page2 = await client.map.event.all({
         pageIndex: 1,
         pageSize: 2,
       });
@@ -193,7 +209,7 @@ describe("Event Router", () => {
 
     it("should filter by status", async () => {
       const client = createTestClient();
-      const activeEvents = await client.event.all({
+      const activeEvents = await client.map.event.all({
         statuses: ["active"],
         pageIndex: 0,
         pageSize: 10,
@@ -236,7 +252,7 @@ describe("Event Router", () => {
       }
 
       const client = createTestClient();
-      const result = await client.event.all({
+      const result = await client.map.event.all({
         searchTerm: "SearchableEvent",
         pageIndex: 0,
         pageSize: 10,
@@ -280,7 +296,7 @@ describe("Event Router", () => {
       }
 
       const client = createTestClient();
-      const result = await client.event.all({
+      const result = await client.map.event.all({
         regionIds: [region.id],
         pageIndex: 0,
         pageSize: 10,
@@ -346,7 +362,7 @@ describe("Event Router", () => {
       }
 
       const client = createTestClient();
-      const result = await client.event.all({
+      const result = await client.map.event.all({
         pageIndex: 0,
         pageSize: 100,
       });
@@ -417,7 +433,7 @@ describe("Event Router", () => {
       });
 
       const client = createTestClient();
-      const result = await client.event.all({
+      const result = await client.map.event.all({
         eventTypeNames: [uniqueTypeName],
         pageIndex: 0,
         pageSize: 100,
@@ -487,7 +503,7 @@ describe("Event Router", () => {
       });
 
       const client = createTestClient();
-      const result = await client.event.all({
+      const result = await client.map.event.all({
         eventCategories: ["third_f"],
         pageIndex: 0,
         pageSize: 100,
