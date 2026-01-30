@@ -237,7 +237,7 @@ export const eventTypeRouter = {
 
       if (!roleCheckResult.success) {
         throw new ORPCError("UNAUTHORIZED", {
-          message: "You are not authorized to update this Event Type",
+          message: `You are not authorized to ${input.id ? "update" : "add"} this Event Type`,
         });
       }
       const eventTypeData: InferInsertModel<typeof schema.eventTypes> = {
