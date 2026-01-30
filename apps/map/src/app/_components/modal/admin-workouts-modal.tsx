@@ -94,13 +94,16 @@ export default function AdminWorkoutsModal({
   const { data: aos } = useQuery(
     orpc.org.all.queryOptions({ input: { orgTypes: ["ao"] } }),
   );
-  const { data: eventResponse } = useQuery(
+  const { data: eventResponse, isLoading: isLoadingEvent } = useQuery(
     orpc.event.byId.queryOptions({
       input: { id: data.id ?? -1 },
       enabled: gte(data.id, 0),
     }),
   );
   const event = eventResponse?.event;
+  const isEditing = !!event;
+  const isLoading = gte(data.id, 0) && isLoadingEvent;
+  
   const router = useRouter();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -148,16 +151,21 @@ export default function AdminWorkoutsModal({
   const crupdateEvent = useMutation(
     orpc.event.crupdate.mutationOptions({
       onSuccess: async () => {
+        await invalidateQueries("map");
         await invalidateQueries("event");
         closeModal();
-        toast.success("Successfully updated event");
+        toast.success(
+          isEditing
+            ? "Successfully updated event"
+            : "Successfully added event",
+        );
         router.refresh();
       },
       onError: (err) => {
         toast.error(
           err instanceof ORPCError && err?.code === "UNAUTHORIZED"
-            ? "You must be logged in to update events"
-            : "Failed to update event",
+            ? `You must be logged in to ${isEditing ? "update" : "create"} events`
+            : `Failed to ${isEditing ? "update" : "add"} event`,
         );
       },
     }),
@@ -228,7 +236,15 @@ export default function AdminWorkoutsModal({
           </DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="flex flex-col items-center gap-2">
+              <Spinner className="size-8" />
+              <p className="text-sm text-muted-foreground">Loading event...</p>
+            </div>
+          </div>
+        ) : (
+          <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex flex-wrap">
               <div className="mb-4 w-1/2 px-2">
@@ -631,6 +647,7 @@ export default function AdminWorkoutsModal({
                   </Button>
                 </div>
               </div>
+              {event?.id ? (
               <Button
                 type="button"
                 variant="outline"
@@ -645,9 +662,11 @@ export default function AdminWorkoutsModal({
               >
                 Delete Event
               </Button>
+              ) : null}
             </div>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
