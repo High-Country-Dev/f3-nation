@@ -73,6 +73,7 @@ export default function AdminDeleteModal({
         case DeleteType.REGION:
         case DeleteType.AO:
           await invalidateQueries("org");
+          await invalidateQueries("map");
           break;
         case DeleteType.EVENT:
           await invalidateQueries("event");
@@ -80,12 +81,14 @@ export default function AdminDeleteModal({
           break;
         case DeleteType.EVENT_TYPE:
           await invalidateQueries("eventType");
+          await invalidateQueries("map");
           break;
         case DeleteType.USER:
           await invalidateQueries("user");
           break;
         case DeleteType.LOCATION:
           await invalidateQueries("location");
+          await invalidateQueries("map");
           break;
         default:
           // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
