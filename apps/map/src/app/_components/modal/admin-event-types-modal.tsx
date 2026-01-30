@@ -64,7 +64,7 @@ export default function AdminEventTypesModal({
   );
   const eventType = eventTypeResponse?.eventType;
   const { data: regions } = useQuery(
-    orpc.org.mine.queryOptions({ input: { orgTypes: ["region"] } }),
+    orpc.org.accessible.queryOptions({ input: { orgTypes: ["region"] } }),
   );
   const sortedRegions = useMemo(() => {
     return regions?.orgs.sort((a, b) => {
@@ -74,8 +74,9 @@ export default function AdminEventTypesModal({
   const router = useRouter();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm({
-    schema: EventTypeInsertForm,
+    schema: EventTypeInsertSchema,
   });
 
   useEffect(() => {
@@ -90,19 +91,21 @@ export default function AdminEventTypesModal({
 
   const isEditing = !!eventType?.id;
   const actionText = isEditing ? "update" : "add";
+  const actionTextPast = isEditing ? "updated" : "added";
 
   const crupdateEventType = useMutation(
     orpc.eventType.crupdate.mutationOptions({
       onSuccess: async () => {
         await invalidateQueries("eventType");
         closeModal();
-        toast.success(`Successfully ${actionText}ed event type`);
+        toast.success(`Successfully ${actionTextPast} event type`);
         router.refresh();
       },
       onError: (err) => {
         toast.error(
           err instanceof ORPCError && err?.code === "UNAUTHORIZED"
-            ? `You must be an admin to that org to ${actionText} an event type`
+            ? err.message ??
+                `You are not authorized to ${actionText} this Event Type`
             : `Failed to ${actionText} event type`,
         );
       },
