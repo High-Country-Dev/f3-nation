@@ -20,4 +20,3 @@ export const DeletedWorkoutWarning = ({ text }: { text: string }) => {
     </div>
   );
 };
-

@@ -314,7 +314,7 @@ export const mapLocationRouter = os.router({
         ),
       };
 
-      return { location: locationWithEvents, message: null };
+      return { location: locationWithEvents };
     }),
   regions: protectedProcedure
     .route({
