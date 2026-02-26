@@ -257,8 +257,14 @@ export const orgRouter = {
               .nullable()
               .describe("Organization metadata"),
             created: z.string().describe("Organization creation date"),
-            parentOrgName: z.string().describe("Parent organization name"),
-            parentOrgType: z.enum(OrgType).describe("Parent organization type"),
+            parentOrgName: z
+              .string()
+              .nullable()
+              .describe("Parent organization name"),
+            parentOrgType: z
+              .enum(OrgType)
+              .nullable()
+              .describe("Parent organization type"),
             aoCount: z
               .number()
               .nullable()

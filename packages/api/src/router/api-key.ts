@@ -62,17 +62,14 @@ export const apiKeyRouter = {
               ownerId: z.number().nullable().describe("Owner user ID"),
               revokedAt: z
                 .string()
-                .datetime()
                 .nullable()
                 .describe("Date the API key was revoked"),
               lastUsedAt: z
                 .string()
-                .datetime()
                 .nullable()
                 .describe("Date the API key was last used"),
               expiresAt: z
                 .string()
-                .datetime()
                 .nullable()
                 .describe("Date the API key expires"),
               created: z.string().describe("Date the API key was created"),
@@ -216,19 +213,13 @@ export const apiKeyRouter = {
         ownerId: z.number().nullable().describe("Owner user ID"),
         revokedAt: z
           .string()
-          .datetime()
           .nullable()
           .describe("Date the API key was revoked"),
         lastUsedAt: z
           .string()
-          .datetime()
           .nullable()
           .describe("Date the API key was last used"),
-        expiresAt: z
-          .string()
-          .datetime()
-          .nullable()
-          .describe("Date the API key expires"),
+        expiresAt: z.string().nullable().describe("Date the API key expires"),
         created: z.string().describe("Date the API key was created"),
         updated: z.string().describe("Date the API key was last updated"),
         secret: z
@@ -339,17 +330,14 @@ export const apiKeyRouter = {
             ownerId: z.number().nullable().describe("Owner user ID"),
             revokedAt: z
               .string()
-              .datetime()
               .nullable()
               .describe("Date the API key was revoked"),
             lastUsedAt: z
               .string()
-              .datetime()
               .nullable()
               .describe("Date the API key was last used"),
             expiresAt: z
               .string()
-              .datetime()
               .nullable()
               .describe("Date the API key expires"),
             created: z.string().describe("Date the API key was created"),
@@ -407,17 +395,14 @@ export const apiKeyRouter = {
             ownerId: z.number().nullable().describe("Owner user ID"),
             revokedAt: z
               .string()
-              .datetime()
               .nullable()
               .describe("Date the API key was revoked"),
             lastUsedAt: z
               .string()
-              .datetime()
               .nullable()
               .describe("Date the API key was last used"),
             expiresAt: z
               .string()
-              .datetime()
               .nullable()
               .describe("Date the API key expires"),
             created: z.string().describe("Date the API key was created"),
