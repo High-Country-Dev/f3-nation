@@ -309,7 +309,13 @@ export const buildSingleUserQuery = async (
     | null;
   includePii: boolean;
 }> => {
-  const { ctx, whereCondition, includePii, includeEmail = false, includeListFields = false } = params;
+  const {
+    ctx,
+    whereCondition,
+    includePii,
+    includeEmail = false,
+    includeListFields = false,
+  } = params;
   const homeRegion = aliasedTable(schema.orgs, "homeRegion");
   const select = buildUserSelect({
     includePii,
