@@ -6,24 +6,45 @@
  * Run with: pnpm test --filter @acme/api user-grant-access.test.ts
  */
 
+import { vi } from "vitest";
+
+const mockLimit = vi.hoisted(() => vi.fn());
+
+vi.mock("@orpc/experimental-ratelimit/memory", () => ({
+  MemoryRatelimiter: vi.fn().mockImplementation(() => ({
+    limit: mockLimit,
+  })),
+}));
+
 import type { Session } from "@acme/auth";
 import { eq, schema } from "@acme/db";
 import { db } from "@acme/db/client";
 import { ERRORS } from "@acme/shared/app/errors";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   cleanup,
   createAdminSession,
   createEditorSession,
   createTestClient,
   getOrCreateF3NationOrg,
+  getOrCreateRoles,
   mockAuthWithSession,
   uniqueId,
 } from "../__tests__/test-utils";
 
 describe("User Router - Grant Access", () => {
+  beforeAll(async () => {
+    await getOrCreateRoles();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLimit.mockResolvedValue({
+      success: true,
+      limit: 10,
+      remaining: 9,
+      reset: Date.now() + 60000,
+    });
   });
 
   describe("PII access scenarios", () => {

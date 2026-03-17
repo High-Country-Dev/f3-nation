@@ -374,6 +374,28 @@ export const userRouter = {
       const { roles: rawRoles, ...rest } = input;
       const roles = rawRoles as RoleInput[];
 
+      // Enforce home-region authorization for existing users
+      if (input.id) {
+        const [existingUser] = await ctx.db
+          .select({ homeRegionId: schema.users.homeRegionId })
+          .from(schema.users)
+          .where(eq(schema.users.id, input.id));
+
+        if (existingUser?.homeRegionId) {
+          const { success } = await checkHasRoleOnOrg({
+            orgId: existingUser.homeRegionId,
+            session: ctx.session,
+            db: ctx.db,
+            roleName: "admin",
+          });
+          if (!success) {
+            throw new ORPCError("UNAUTHORIZED", {
+              message: "You can only modify users whose home region you manage",
+            });
+          }
+        }
+      }
+
       // Check if this is an update (has id) and if requester has PII access
       let hasPiiAccess = false;
       if (input.id) {

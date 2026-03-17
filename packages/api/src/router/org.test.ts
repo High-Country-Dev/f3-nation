@@ -71,6 +71,24 @@ describe("Org Router", () => {
     });
 
     it("should paginate results correctly", async () => {
+      const f3Nation = await getOrCreateF3NationOrg();
+      const session = await createAdminSession();
+      await mockAuthWithSession(session);
+
+      const prefix = `PaginateTest-${uniqueId()}`;
+      for (let i = 0; i < 3; i++) {
+        const [org] = await db
+          .insert(schema.orgs)
+          .values({
+            name: `${prefix} Region ${i}`,
+            orgType: "region",
+            parentId: f3Nation.id,
+            isActive: true,
+          })
+          .returning();
+        if (org) createdOrgIds.push(org.id);
+      }
+
       const client = createTestClient();
       const page1 = await client.org.all({
         orgTypes: ["region"],
@@ -87,14 +105,10 @@ describe("Org Router", () => {
       expect(page1.orgs.length).toBeLessThanOrEqual(2);
       expect(page2.orgs.length).toBeLessThanOrEqual(2);
 
-      // Results should be different if there are more than 2 regions
-      if (page1.total > 2 && page1.orgs.length > 0 && page2.orgs.length > 0) {
-        // Pages must not overlap - each page should have distinct org IDs
-        const page1Ids = new Set(page1.orgs.map((o) => o.id));
-        page2.orgs.forEach((org) => {
-          expect(page1Ids.has(org.id)).toBe(false);
-        });
-      }
+      const page1Ids = new Set(page1.orgs.map((o) => o.id));
+      page2.orgs.forEach((org) => {
+        expect(page1Ids.has(org.id)).toBe(false);
+      });
     });
 
     it("should filter by status", async () => {

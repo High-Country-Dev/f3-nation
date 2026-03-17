@@ -35,6 +35,11 @@ interface BuildUserSelectParams {
   homeRegionOrg?: typeof schema.orgs;
 }
 
+interface HomeRegionSummary {
+  homeRegionId: number;
+  homeRegionName: string | null;
+}
+
 // Shared function to build user select fields
 export const buildUserSelect = ({
   includePii,
@@ -162,6 +167,11 @@ export const userListInputSchema = z.object({
     .describe(
       "Filter users by organization ID(s). Returns users with roles in ANY of the specified organizations.",
     ),
+  homeRegionIds: arrayOrSingle(z.coerce.number())
+    .optional()
+    .describe(
+      "Filter users by home region ID(s). Returns users whose home region matches ANY of the specified regions.",
+    ),
   includePii: z.coerce
     .boolean()
     .optional()
@@ -212,7 +222,16 @@ export const buildUserListQuery = async ({
         )
       : undefined,
     input?.orgIds?.length
-      ? inArray(schema.rolesXUsersXOrg.orgId, input.orgIds)
+      ? or(
+          inArray(schema.rolesXUsersXOrg.orgId, input.orgIds),
+          and(
+            isNull(schema.rolesXUsersXOrg.orgId),
+            inArray(schema.users.homeRegionId, input.orgIds),
+          ),
+        )
+      : undefined,
+    input?.homeRegionIds?.length
+      ? inArray(schema.users.homeRegionId, input.homeRegionIds)
       : undefined,
   );
 
@@ -232,13 +251,6 @@ export const buildUserListQuery = async ({
     "id",
   );
 
-  const homeRegion = aliasedTable(schema.orgs, "homeRegion");
-  const select = buildUserSelect({
-    includePii,
-    includeListFields: true, // Include list-specific fields
-    homeRegionOrg: homeRegion,
-  });
-
   const userIdsQuery = ctx.db
     .selectDistinct({ id: schema.users.id })
     .from(schema.users)
@@ -255,6 +267,13 @@ export const buildUserListQuery = async ({
     .from(userIdsQuery.as("distinct_users"));
 
   const userCount = countResult[0];
+
+  const homeRegion = aliasedTable(schema.orgs, "homeRegion");
+  const select = buildUserSelect({
+    includePii,
+    includeListFields: true, // Include list-specific fields
+    homeRegionOrg: homeRegion,
+  });
 
   const query = ctx.db
     .select(select)
