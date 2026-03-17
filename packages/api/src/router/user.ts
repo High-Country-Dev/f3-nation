@@ -342,7 +342,7 @@ export const userRouter = {
         includeListFields: true,
       });
     }),
-  crupdate: adminProcedure
+  crupdate: editorProcedure
     .input(CrupdateUserSchema)
     .route({
       method: "POST",
@@ -375,7 +375,7 @@ export const userRouter = {
       const roles = rawRoles as RoleInput[];
 
       // Enforce home-region authorization for existing users
-      if (input.id) {
+      if (input.id && ctx.session?.id !== input.id) {
         const [existingUser] = await ctx.db
           .select({ homeRegionId: schema.users.homeRegionId })
           .from(schema.users)
@@ -386,7 +386,7 @@ export const userRouter = {
             orgId: existingUser.homeRegionId,
             session: ctx.session,
             db: ctx.db,
-            roleName: "admin",
+            roleName: "editor",
           });
           if (!success) {
             throw new ORPCError("UNAUTHORIZED", {
