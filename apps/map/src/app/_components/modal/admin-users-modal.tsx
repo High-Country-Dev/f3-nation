@@ -94,22 +94,26 @@ export default function UserModal({
     return { orgs: adminOrgs };
   }, [accessibleOrgsData]);
 
+  const isAdmin = useMemo(() => {
+    return session?.roles?.some((r) => r.roleName === "admin") ?? false;
+  }, [session?.roles]);
+
   const canEditUser = useMemo(() => {
     if (!user?.id) return true;
     if (session?.id === user.id) return true;
-    if (user.homeRegionId == null) return true;
+    if (user.homeRegionId == null) return isAdmin;
 
     const accessibleOrgIds = new Set((orgs?.orgs ?? []).map((org) => org.id));
     return accessibleOrgIds.has(user.homeRegionId);
-  }, [user?.id, user?.homeRegionId, orgs?.orgs, session?.id]);
+  }, [user?.id, user?.homeRegionId, orgs?.orgs, session?.id, isAdmin]);
 
   const isHomeRegionDisabled = useMemo(() => {
     if (session?.id === user?.id) return false;
-    if (user?.homeRegionId == null) return false;
-  
+    if (user?.homeRegionId == null) return !isAdmin;
+
     const accessibleOrgIds = new Set((orgs?.orgs ?? []).map((org) => org.id));
     return !accessibleOrgIds.has(user.homeRegionId);
-  }, [session?.id, user?.id, user?.homeRegionId, orgs?.orgs]);
+  }, [session?.id, user?.id, user?.homeRegionId, orgs?.orgs, isAdmin]);
 
   const form = useForm({
     schema: CrupdateUserSchema.extend({
