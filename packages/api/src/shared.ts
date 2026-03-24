@@ -207,7 +207,7 @@ export const getSession = async ({ context }: { context: BaseContext }) => {
   const appClient = context.reqHeaders?.get(Header.Client);
 
   let apiKey: string | null = null;
-  if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+  if (authHeader?.toLowerCase().startsWith("bearer ")) {
     apiKey = authHeader.slice(7).trim();
   }
 

@@ -181,17 +181,24 @@ const getFakeGeolocationPosition = (
 ): Promise<GeolocationPosition> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const position = {
-        coords: {
-          latitude: 37.774929,
-          longitude: -122.419418,
-          accuracy: 10,
-          altitude: null,
-          altitudeAccuracy: null,
-          heading: null,
-          speed: null,
+      const coords = {
+        latitude: 37.774929,
+        longitude: -122.419418,
+        accuracy: 10,
+        altitude: null,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null,
+        toJSON() {
+          return this;
         },
+      };
+      const position: GeolocationPosition = {
+        coords,
         timestamp: Date.now(),
+        toJSON() {
+          return { coords, timestamp: this.timestamp };
+        },
       };
       mapStore.setState({
         userGpsLocationStatus: "success",

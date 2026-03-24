@@ -1,6 +1,6 @@
 import type { Session } from "@acme/auth";
-import type { UserRole } from "@acme/shared/app/enums";
 import { aliasedTable, eq, schema } from "@acme/db";
+import type { UserRole } from "@acme/shared/app/enums";
 import {
   isProductionNodeEnv,
   isTestNodeEnv,
@@ -87,7 +87,13 @@ export const checkHasRoleOnOrg = async ({
   const level4Org = aliasedTable(schema.orgs, "level_4_org"); // Area
   const level5Org = aliasedTable(schema.orgs, "level_5_org"); // Nation
 
-  const allParentOrgIds = await db
+  const allParentOrgIds: {
+    level1Id: number | null;
+    level2Id: number | null;
+    level3Id: number | null;
+    level4Id: number | null;
+    level5Id: number | null;
+  }[] = await db
     .select({
       level1Id: level1Org.id,
       level2Id: level2Org.id,

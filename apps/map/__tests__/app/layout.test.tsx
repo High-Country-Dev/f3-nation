@@ -17,14 +17,16 @@ vi.mock("geist/font/sans", () => ({
 
 // Mock the geolocation API
 const geolocationMock = {
-  getCurrentPosition: vi.fn().mockImplementation((success) =>
-    success({
-      coords: {
-        latitude: 51.1,
-        longitude: 45.3,
-      },
-    }),
-  ),
+  getCurrentPosition: vi
+    .fn()
+    .mockImplementation((success: (pos: GeolocationPosition) => void) =>
+      success({
+        coords: {
+          latitude: 51.1,
+          longitude: 45.3,
+        },
+      } as GeolocationPosition),
+    ),
 };
 
 // Mock the permissions API
@@ -54,7 +56,7 @@ vi.mock("navigator", () => {
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: vi.fn().mockImplementation((query) => ({
+  value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,

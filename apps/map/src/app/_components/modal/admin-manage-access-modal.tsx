@@ -402,7 +402,7 @@ export default function AdminManageAccessModal({
                                 placeholder={
                                   data?.userId
                                     ? field.value
-                                      ? userByIdData?.user?.email ?? ""
+                                      ? (userByIdData?.user?.email ?? "")
                                       : "Email not available"
                                     : ""
                                 }

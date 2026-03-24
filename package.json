@@ -39,11 +39,21 @@
     "@acme/prettier-config": "workspace:^0.1.0",
     "@acme/release-it": "workspace:*",
     "@turbo/gen": "^1.12.3",
+    "has": "^1.0.3",
     "prettier": "^3.2.5",
     "turbo": "^1.12.3",
     "typescript": "^5.3.3"
   },
   "prettier": "@acme/prettier-config",
+  "pnpm": {
+    "neverBuiltDependencies": [
+      "bun"
+    ],
+    "overrides": {
+      "@tanstack/query-core": "5.95.2",
+      "es-shim-unscopables": "^1.1.0"
+    }
+  },
   "resolutions": {
     "axios": ">=1.7.4",
     "braces": ">=3.0.3",

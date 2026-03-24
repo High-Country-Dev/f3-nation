@@ -6,7 +6,6 @@ import {
   aliasedTable,
   and,
   count,
-  countDistinct,
   eq,
   ilike,
   inArray,
@@ -195,9 +194,8 @@ async function getOrgCount(params: {
   const { db, where } = params;
 
   const [result] = await db
-    .select({ count: countDistinct(org.id) })
+    .select({ count: count(org.id) })
     .from(org)
-    .leftJoin(parentOrg, eq(org.parentId, parentOrg.id))
     .where(where);
 
   return result?.count ?? 0;

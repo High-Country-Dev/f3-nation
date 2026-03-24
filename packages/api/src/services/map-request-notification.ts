@@ -218,7 +218,7 @@ export const notifyMapChangeRequest = async ({
   // Prepare email parameters
   const mapBaseUrl = env.NEXT_PUBLIC_MAP_URL?.endsWith("/")
     ? env.NEXT_PUBLIC_MAP_URL.slice(0, -1)
-    : env.NEXT_PUBLIC_MAP_URL ?? "";
+    : (env.NEXT_PUBLIC_MAP_URL ?? "");
 
   const requestsUrl = `${mapBaseUrl}/admin/requests`;
   const title = requestTypeToTitle(request.requestType);

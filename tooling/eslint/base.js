@@ -32,7 +32,9 @@ const config = {
   ignorePatterns: [
     "**/*.config.js",
     "**/*.config.cjs",
+    "**/*.config.ts",
     "**/.eslintrc.cjs",
+    "**/next-env.d.ts",
     ".next",
     "dist",
     "pnpm-lock.yaml",

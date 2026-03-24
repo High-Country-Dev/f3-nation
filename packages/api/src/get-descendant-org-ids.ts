@@ -29,7 +29,13 @@ export const getDescendantOrgIds = async (
 
   // Single query to get all descendants up to 5 levels deep
   // This mirrors the approach in checkHasRoleOnOrg but goes DOWN instead of UP
-  const descendants = await db
+  const descendants: {
+    level0Id: number | null;
+    level1Id: number | null;
+    level2Id: number | null;
+    level3Id: number | null;
+    level4Id: number | null;
+  }[] = await db
     .select({
       level0Id: level0.id,
       level1Id: level1.id,
