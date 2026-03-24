@@ -209,7 +209,7 @@ describe("User Router", () => {
         });
 
         expect(result).toHaveProperty("user");
-        expect(result.user).not.toBeNull();
+        expect(result.user).toBeDefined();
         expect(result.user?.id).toBe(testUser.id);
         expect(result.includePii).toBe(false);
 
