@@ -368,9 +368,7 @@ export default function AdminManageAccessModal({
                 }
                 const orgIds = data.roles?.map((r) => r.orgId) ?? [];
                 if (new Set(orgIds).size !== orgIds.length) {
-                  toast.error(
-                    "A user can only have one role per organization",
-                  );
+                  toast.error("A user can only have one role per organization");
                   return;
                 }
                 // When updating an existing user (has id), email is not required
@@ -759,7 +757,9 @@ export default function AdminManageAccessModal({
                                   value={roleEntry.orgId.toString()}
                                   options={
                                     orgs?.orgs
-                                      .filter((org) => !assignedOrgIds.has(org.id))
+                                      .filter(
+                                        (org) => !assignedOrgIds.has(org.id),
+                                      )
                                       .map((org) => ({
                                         value: org.id.toString(),
                                         label: `${org.name} (${org.orgType})`,
