@@ -290,7 +290,11 @@ export const userRouter = {
     )
     .handler(async ({ context: ctx, input }) => {
       const { roles: rawRoles, ...rest } = input;
-      const roles = rawRoles as RoleInput[];
+      const deduped = new Map<number, RoleInput>();
+      for (const role of rawRoles as RoleInput[]) {
+        deduped.set(role.orgId, role);
+      }
+      const roles = Array.from(deduped.values());
 
       let canEditProfile = true;
       if (input.id && ctx.session?.id !== input.id) {
