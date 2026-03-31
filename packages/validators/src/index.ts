@@ -99,50 +99,50 @@ export const CreateEventSchema = EventInsertSchema.omit({
 });
 export type EventInsertType = z.infer<typeof CreateEventSchema>;
 
-const emptyOr = (schema: z.ZodTypeAny) => z.union([z.literal(""), schema]);
-
-const httpUrl = z
+export const websiteUrlSchema = z
   .string()
   .trim()
-  .url("Please enter a valid URL")
+  .transform((v) => v || null)
   .refine(
-    (value) => value.startsWith("http://") || value.startsWith("https://"),
+    (value) => {
+      if (value === null) return true;
+
+      try {
+        const url = new URL(value);
+        const { hostname } = url;
+
+        return (
+          (value.startsWith("http://") || value.startsWith("https://")) &&
+          /\.[a-zA-Z]{2,}$/.test(hostname) &&
+          !hostname.startsWith(".")
+        );
+      } catch {
+        return false;
+      }
+    },
     {
-      message: "Please enter the full link, including https://",
+      message: "Please enter a valid URL (e.g. https://www.example.com)",
     },
   );
 
-export const websiteUrlSchema = z.union([
-  z.literal(""),
-  z
-    .string()
-    .trim()
-    .url("Please enter a valid URL")
-    .refine(
-      (value) => {
-        try {
-          const url = new URL(value);
-          const { hostname } = url;
+const normalizeOptionalUrl = (value: string) => {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+};
 
-          return (
-            (value.startsWith("http://") || value.startsWith("https://")) &&
-            /\.[a-zA-Z]{2,}$/.test(hostname) &&
-            !hostname.startsWith(".")
-          );
-        } catch {
-          return false;
-        }
-      },
-      {
-        message: "Please enter a valid website URL (e.g. https://example.com)",
-      },
-    ),
-]);
+const hasHttpProtocol = (value: string) =>
+  value.startsWith("http://") || value.startsWith("https://");
 
-export const facebookUrlSchema = emptyOr(
-  httpUrl.refine(
+export const facebookUrlSchema = z
+  .string()
+  .transform(normalizeOptionalUrl)
+  .refine(
     (value) => {
+      if (value === null) return true;
+
       try {
+        if (!hasHttpProtocol(value)) return false;
+
         const url = new URL(value);
         const host = url.hostname.toLowerCase();
         const path = url.pathname.replace(/\/+$/, "");
@@ -153,7 +153,6 @@ export const facebookUrlSchema = emptyOr(
           host === "m.facebook.com";
 
         if (!isFacebookHost) return false;
-
         if (path.startsWith("/share")) return false;
         if (path.startsWith("/sharer")) return false;
 
@@ -163,15 +162,20 @@ export const facebookUrlSchema = emptyOr(
       }
     },
     {
-      message: "Please enter a valid Facebook profile or page URL",
+      message: "Please enter a valid URL (e.g. https://www.example.com)",
     },
-  ),
-);
+  );
 
-export const instagramUrlSchema = emptyOr(
-  httpUrl.refine(
+export const instagramUrlSchema = z
+  .string()
+  .transform(normalizeOptionalUrl)
+  .refine(
     (value) => {
+      if (value === null) return true;
+
       try {
+        if (!hasHttpProtocol(value)) return false;
+
         const url = new URL(value);
         const host = url.hostname.toLowerCase();
         const path = url.pathname.replace(/\/+$/, "");
@@ -196,15 +200,20 @@ export const instagramUrlSchema = emptyOr(
       }
     },
     {
-      message: "Please enter a valid Instagram profile URL",
+      message: "Please enter a valid URL (e.g. https://www.example.com)",
     },
-  ),
-);
+  );
 
-export const twitterUrlSchema = emptyOr(
-  httpUrl.refine(
+export const twitterUrlSchema = z
+  .string()
+  .transform(normalizeOptionalUrl)
+  .refine(
     (value) => {
+      if (value === null) return true;
+
       try {
+        if (!hasHttpProtocol(value)) return false;
+
         const url = new URL(value);
         const host = url.hostname.toLowerCase();
         const path = url.pathname.replace(/\/+$/, "");
@@ -216,7 +225,6 @@ export const twitterUrlSchema = emptyOr(
           host === "www.x.com";
 
         if (!isTwitterHost) return false;
-
         if (path.startsWith("/intent") || path.includes("/status/")) {
           return false;
         }
@@ -227,10 +235,9 @@ export const twitterUrlSchema = emptyOr(
       }
     },
     {
-      message: "Please enter a valid X/Twitter profile URL",
+      message: "Please enter a valid URL (e.g. https://www.example.com)",
     },
-  ),
-);
+  );
 
 // NATION SCHEMA
 export const NationInsertSchema = createInsertSchema(orgs, {
