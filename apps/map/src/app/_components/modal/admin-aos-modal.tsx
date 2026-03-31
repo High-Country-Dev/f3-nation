@@ -276,7 +276,7 @@ export default function AdminAOsModal({
                 <FormField
                   control={form.control}
                   name="twitter"
-                  render={({ field }) => (
+                  render={({ field }: { field: { value: string | null } }) => (
                     <FormItem>
                       <FormLabel>Twitter</FormLabel>
                       <FormControl>
@@ -295,7 +295,7 @@ export default function AdminAOsModal({
                 <FormField
                   control={form.control}
                   name="facebook"
-                  render={({ field }) => (
+                  render={({ field }: { field: { value: string | null } }) => (
                     <FormItem>
                       <FormLabel>Facebook</FormLabel>
                       <FormControl>
@@ -314,7 +314,7 @@ export default function AdminAOsModal({
                 <FormField
                   control={form.control}
                   name="instagram"
-                  render={({ field }) => (
+                  render={({ field }: { field: { value: string | null } }) => (
                     <FormItem>
                       <FormLabel>Instagram</FormLabel>
                       <FormControl>
