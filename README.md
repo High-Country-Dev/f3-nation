@@ -8,9 +8,9 @@ This is a monorepo that is built with PNPM workspaces and Turbo for managing mul
 
 The root directory contains configuration files that govern the entire monorepo:
 
-- **`package.json`**: Root-level dependencies and scripts
-- **`pnpm-workspace.yaml`**: Defines workspace packages (apps and packages directories)
-- **`turbo.json`**: Turbo configuration for task orchestration, caching, and pipeline definitions
+- `**package.json**`: Root-level dependencies and scripts
+- `**pnpm-workspace.yaml**`: Defines workspace packages (apps and packages directories)
+- `**turbo.json**`: Turbo configuration for task orchestration, caching, and pipeline definitions
 - **Root-level commands** affect all workspaces unless filtered
 
 ### Working with Application Directories
@@ -97,58 +97,72 @@ The monorepo leverages Turbo's caching system:
 ## Setup
 
 1. **Clone the repository**:
-
-   ```bash
-   git clone https://github.com/F3-Nation/f3-nation.git && cd f3-nation
-   ```
-
+  ```bash
+   git clone https://github.com/High-Country-Dev/f3-nation.git && cd f3-nation
+  ```
 2. **Install PNPM globally** (if not already installed):
-
-   ```bash
+  ```bash
    npm install -g pnpm
-   ```
-
+  ```
 3. **Install dependencies**:
-
-   ```bash
+  ```bash
    pnpm install
-   ```
-
+  ```
 4. **Environment setup**:
+  - Get env.zip from F3 Nation Slack
+  - Unzip and rename to `.env`
+  - **Important**: Environment variables are application-specific. Place the `.env` file in the appropriate application directory, not the monorepo root
+  - For local map and API development, place env files in `apps/map/.env` and `apps/api/.env`
+  - Use these local HTTPS values in your env files:
+    ```bash
+    NEXT_PUBLIC_MAP_URL='https://map.f3nation.test'
+    NEXT_PUBLIC_API_URL='https://api.f3nation.test'
+    ```
+  - See [F3 Nation Map README](apps/map/README.md) for app-specific setup details
+  - For PaxMiner data admin tooling, see [Admin README](apps/admin/README.md)
+5. **Configure local hosts**:
+  ```bash
+   # /etc/hosts
+   127.0.0.1 map.f3nation.test api.f3nation.test
+  ```
+6. **Start the local HTTPS proxy**:
+  ```bash
+   brew install caddy
+   caddy run --config Caddyfile
+  ```
+7. **Start the API and map in separate terminals**:
+  ```bash
+   # API
+   PORT=3001 pnpm -F f3-nation-api dev
 
-   - Get env.zip from F3 Nation Slack
-   - Unzip and rename to `.env`
-   - **Important**: Environment variables are application-specific. Place the `.env` file in the appropriate application directory, not the monorepo root
-   - For the map app: place in `apps/map/.env`
-   - See [F3 Nation Map README](apps/map/README.md) for app-specific setup details
-   - For PaxMiner data admin tooling, see [Admin README](apps/admin/README.md)
-
-5. **Start development**:
-
-   ```bash
-   # Start all apps
-   pnpm dev
-
-   # Start specific app only
-   pnpm dev --filter f3-nation-map
-   ```
+   # Map
+   PORT=3000 pnpm -F f3-nation-map dev
+  ```
+8. **Verify the local setup**:
+  ```text
+   Map: https://map.f3nation.test
+   API: https://api.f3nation.test
+  ```
 
 ## Application Registry
 
 ### Current Applications
+
 
 | Application          | Directory     | Port | Description                                                                                        |
 | -------------------- | ------------- | ---- | -------------------------------------------------------------------------------------------------- |
 | **F3 Nation Map**    | `apps/map/`   | 3000 | Interactive map application for F3 Nation locations and events - [README](apps/map/README.md)      |
 | **Admin (PaxMiner)** | `apps/admin/` | -    | PaxMiner MySQL admin scripts for backups, migrations, and seeding - [README](apps/admin/README.md) |
 
+
 ### Future Applications (Planned)
 
-_Additional applications will be added to this registry as they are developed_
+*Additional applications will be added to this registry as they are developed*
 
 ## Package Registry
 
 ### Shared Packages
+
 
 | Package        | Directory              | Description                                 |
 | -------------- | ---------------------- | ------------------------------------------- |
@@ -159,19 +173,20 @@ _Additional applications will be added to this registry as they are developed_
 | **UI**         | `packages/ui/`         | Reusable UI components                      |
 | **Validators** | `packages/validators/` | Data validation schemas                     |
 
+
 ## Environment Variables
 
-Environment variables are application-specific in this monorepo. The `.env` file should be placed in the application directory (e.g., `apps/map/`) rather than the monorepo root.
+Environment variables are application-specific in this monorepo. The `.env` file should be placed in the application directory (for example, `apps/map/.env` or `apps/api/.env`) rather than the monorepo root. For local HTTPS development with Caddy, use `NEXT_PUBLIC_MAP_URL='https://map.f3nation.test'` and `NEXT_PUBLIC_API_URL='https://api.f3nation.test'` in your local env files.
 
 ## Development Workflow
 
 1. **Make changes** in the appropriate app or package directory
 2. **Test locally** using filter flags to run only what you need
 3. **Lint and test** before committing:
-   ```bash
+  ```bash
    pnpm lint --filter <your-workspace>
    pnpm test --filter <your-workspace>
-   ```
+  ```
 4. **Commit changes** - Turbo will handle optimal task execution
 
 # DB Commands
@@ -180,3 +195,4 @@ Environment variables are application-specific in this monorepo. The `.env` file
 - For dev migrations use the `dev_generic` user
 - For staging migrations use the `dev_generic` user
 - For production migrations use the `f3slackbot` user
+
