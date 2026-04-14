@@ -181,7 +181,7 @@ const dataTypeToName = (
     case DeleteType.POSITION:
       return "Position";
     default:
-       // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(`Invalid delete type: ${dataType}`);
   }
 };

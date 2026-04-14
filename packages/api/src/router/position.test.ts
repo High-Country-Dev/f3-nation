@@ -79,8 +79,15 @@ describe("Position Router", () => {
         // Ignore
       }
     }
-    // Clean up users
+    // Clean up role assignments then users
     for (const userId of createdUserIds.reverse()) {
+      try {
+        await db
+          .delete(schema.rolesXUsersXOrg)
+          .where(eq(schema.rolesXUsersXOrg.userId, userId));
+      } catch {
+        // Ignore
+      }
       try {
         await cleanup.user(userId);
       } catch {
@@ -157,6 +164,54 @@ describe("Position Router", () => {
       orgId,
       userId,
     });
+  };
+
+  /**
+   * Creates a real admin user+role in the DB so that
+   * getEditableOrgIdsForUser can resolve nation admin status from the DB.
+   */
+  const createDbBackedAdminSession = async () => {
+    const nationOrg = await getOrCreateF3NationOrg();
+    const user = await createTestUser();
+
+    const [adminRole] = await db
+      .select({ id: schema.roles.id })
+      .from(schema.roles)
+      .where(eq(schema.roles.name, "admin"));
+    if (!adminRole) throw new Error("Admin role not found in DB");
+
+    await db.insert(schema.rolesXUsersXOrg).values({
+      roleId: adminRole.id,
+      userId: user.id,
+      orgId: nationOrg.id,
+    });
+
+    const session = {
+      id: user.id,
+      email: user.email,
+      user: {
+        id: String(user.id),
+        email: user.email,
+        name: user.f3Name,
+        roles: [
+          {
+            orgId: nationOrg.id,
+            orgName: nationOrg.name ?? "F3 Nation",
+            roleName: "admin" as const,
+          },
+        ],
+      },
+      roles: [
+        {
+          orgId: nationOrg.id,
+          orgName: nationOrg.name ?? "F3 Nation",
+          roleName: "admin" as const,
+        },
+      ],
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
+    };
+
+    return { session, user };
   };
 
   // --- Tests ---
@@ -877,7 +932,7 @@ describe("Position Router", () => {
 
   describe("getAllAssignments", () => {
     it("should return assignments with joined display data", async () => {
-      const session = await createAdminSession();
+      const { session } = await createDbBackedAdminSession();
       await mockAuthWithSession(session);
 
       const region = await createTestRegion();
@@ -905,7 +960,7 @@ describe("Position Router", () => {
     });
 
     it("should filter by orgId", async () => {
-      const session = await createAdminSession();
+      const { session } = await createDbBackedAdminSession();
       await mockAuthWithSession(session);
 
       const region1 = await createTestRegion();
@@ -928,7 +983,7 @@ describe("Position Router", () => {
     });
 
     it("should filter by positionId", async () => {
-      const session = await createAdminSession();
+      const { session } = await createDbBackedAdminSession();
       await mockAuthWithSession(session);
 
       const region = await createTestRegion();
@@ -950,7 +1005,7 @@ describe("Position Router", () => {
     });
 
     it("should filter by userId", async () => {
-      const session = await createAdminSession();
+      const { session } = await createDbBackedAdminSession();
       await mockAuthWithSession(session);
 
       const region = await createTestRegion();
@@ -972,7 +1027,7 @@ describe("Position Router", () => {
     });
 
     it("should exclude inactive positions by default", async () => {
-      const session = await createAdminSession();
+      const { session } = await createDbBackedAdminSession();
       await mockAuthWithSession(session);
 
       const region = await createTestRegion();
@@ -999,7 +1054,7 @@ describe("Position Router", () => {
     });
 
     it("should include inactive when includeInactive is true", async () => {
-      const session = await createAdminSession();
+      const { session } = await createDbBackedAdminSession();
       await mockAuthWithSession(session);
 
       const region = await createTestRegion();

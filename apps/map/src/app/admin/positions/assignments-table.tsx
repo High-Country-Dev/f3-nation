@@ -53,7 +53,9 @@ export const AssignmentsTable = () => {
   const sortedOrgs = useMemo(() => {
     if (!orgs) return [];
     return orgs.slice().sort((a, b) => {
-      const typeOrder = (ORG_TYPE_ORDER[a.orgType] ?? ORG_TYPE_ORDER_FALLBACK) - (ORG_TYPE_ORDER[b.orgType] ?? ORG_TYPE_ORDER_FALLBACK);
+      const typeOrder =
+        (ORG_TYPE_ORDER[a.orgType] ?? ORG_TYPE_ORDER_FALLBACK) -
+        (ORG_TYPE_ORDER[b.orgType] ?? ORG_TYPE_ORDER_FALLBACK);
       if (typeOrder !== 0) return typeOrder;
       return a.name.localeCompare(b.name);
     });
