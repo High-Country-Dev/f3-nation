@@ -162,7 +162,8 @@ export const facebookUrlSchema = z
       }
     },
     {
-      message: "Please enter a valid URL (e.g. https://www.example.com)",
+      message:
+        "Please enter a valid Facebook URL (e.g. https://www.facebook.com/f3nation)",
     },
   );
 
@@ -200,7 +201,8 @@ export const instagramUrlSchema = z
       }
     },
     {
-      message: "Please enter a valid URL (e.g. https://www.example.com)",
+      message:
+        "Please enter a valid Instagram URL (e.g. https://www.instagram.com/f3nation)",
     },
   );
 
@@ -235,7 +237,8 @@ export const twitterUrlSchema = z
       }
     },
     {
-      message: "Please enter a valid URL (e.g. https://www.example.com)",
+      message:
+        "Please enter a valid X/Twitter URL (e.g. https://x.com/f3nation)",
     },
   );
 
