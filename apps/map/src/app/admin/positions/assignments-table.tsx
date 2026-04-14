@@ -152,18 +152,18 @@ function PositionSections({
   const orgPositions = positions.filter((p) => p.orgId !== null);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {nationalPositions.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1.5 pb-2">
             <h2 className="text-sm font-semibold text-muted-foreground">
               National Positions
             </h2>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
               Nation-wide
             </Badge>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="divide-y">
             {nationalPositions.map((position) => (
               <PositionAssignmentRow
                 key={position.id}
@@ -177,11 +177,11 @@ function PositionSections({
       )}
 
       {orgPositions.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-muted-foreground">
+        <div className="flex flex-col">
+          <h2 className="pb-2 text-sm font-semibold text-muted-foreground">
             {orgName} Positions
           </h2>
-          <div className="flex flex-col gap-2">
+          <div className="divide-y">
             {orgPositions.map((position) => (
               <PositionAssignmentRow
                 key={position.id}
@@ -225,13 +225,14 @@ function PositionAssignmentRow({
   );
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="mb-2 flex items-center justify-between">
+    <div className="py-3">
+      <div className="mb-1.5 flex items-center justify-between">
         <h3 className="text-sm font-semibold">{position.name}</h3>
         {canEdit && (
           <Button
             variant="outline"
             size="sm"
+            className="h-7 px-2 text-xs"
             onClick={() => setAddDialogOpen(true)}
           >
             <Plus className="mr-1 h-3 w-3" />
@@ -241,14 +242,14 @@ function PositionAssignmentRow({
       </div>
 
       {position.description && (
-        <p className="mb-3 text-xs text-muted-foreground">
+        <p className="mb-2 text-xs text-muted-foreground">
           {position.description}
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {position.users.length === 0 ? (
-          <span className="text-sm italic text-muted-foreground">
+          <span className="text-xs italic text-muted-foreground">
             No users assigned
           </span>
         ) : (
@@ -256,7 +257,7 @@ function PositionAssignmentRow({
             <Badge
               key={user.id}
               variant="secondary"
-              className="flex items-center gap-1.5 border-blue-200 bg-blue-50 px-3 py-1.5 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200"
+              className="flex items-center gap-1 border-blue-200 bg-blue-50 px-2 py-0.5 text-xs text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200"
             >
               {user.f3Name ?? user.firstName ?? `User #${user.id}`}
               {canEdit && (
@@ -268,9 +269,9 @@ function PositionAssignmentRow({
                       userId: user.id,
                     })
                   }
-                  className="ml-1 rounded-full p-0.5 hover:bg-muted"
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-3 w-3" />
                 </button>
               )}
             </Badge>
@@ -351,7 +352,7 @@ function AddUserDialog({
           Enter the user&apos;s email address to find and assign them.
         </p>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <Command
             className="overflow-visible rounded-lg border"
             shouldFilter={false}

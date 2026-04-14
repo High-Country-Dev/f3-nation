@@ -151,7 +151,7 @@ export default function AdminPositionsModal({
 
         <Form {...form}>
           <div className="flex flex-wrap">
-            <div className="mb-4 w-full px-2 md:w-1/2">
+            <div className="mb-3 w-full px-2 md:w-1/2">
               <FormField
                 control={form.control}
                 name="id"
@@ -166,7 +166,7 @@ export default function AdminPositionsModal({
                 )}
               />
             </div>
-            <div className="mb-4 w-full px-2 md:w-1/2">
+            <div className="mb-3 w-full px-2 md:w-1/2">
               <FormField
                 control={form.control}
                 name="name"
@@ -186,7 +186,7 @@ export default function AdminPositionsModal({
                 )}
               />
             </div>
-            <div className="mb-4 w-full px-2 md:w-1/2">
+            <div className="mb-3 w-full px-2 md:w-1/2">
               <ControlledSelect
                 control={form.control}
                 label="Org Level"
@@ -195,7 +195,7 @@ export default function AdminPositionsModal({
                 disabled={isReadOnly}
               />
             </div>
-            <div className="mb-4 w-full px-2">
+            <div className="mb-3 w-full px-2">
               <FormField
                 control={form.control}
                 name="description"
@@ -213,9 +213,9 @@ export default function AdminPositionsModal({
                 )}
               />
             </div>
-            <div className="mb-4 w-full px-2">
+            <div className="mb-3 w-full px-2">
               {!isReadOnly && (
-                <div className="mb-4 flex flex-col space-y-2 pt-4 sm:flex-row sm:space-x-4 sm:space-y-0">
+                <div className="mb-3 flex flex-col space-y-2 pt-3 sm:flex-row sm:space-x-4 sm:space-y-0">
                   <Button
                     type="button"
                     variant="outline"

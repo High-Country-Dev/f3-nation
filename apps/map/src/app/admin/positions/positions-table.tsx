@@ -105,7 +105,7 @@ export const PositionsTable = () => {
         return (
           <div className="flex items-center justify-start">
             {isNational ? (
-              <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+              <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-100 px-1.5 py-0 text-[10px] font-medium text-blue-700">
                 National
               </span>
             ) : (
@@ -137,7 +137,7 @@ export const PositionsTable = () => {
       cell: ({ row }) => (
         <div className="flex items-center justify-start">
           <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
+            className={`inline-flex items-center rounded-full border px-1.5 py-0 text-[10px] font-medium ${
               row.original.isActive
                 ? "border-green-200 bg-green-100 text-green-700"
                 : "border-red-200 bg-red-100 text-red-700"
