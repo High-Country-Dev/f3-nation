@@ -140,8 +140,31 @@ export default function AdminPositionsModal({
       });
     }
 
+    if (
+      position?.orgId != null &&
+      position.orgName &&
+      !options.some((o) => o.value === position.orgId!.toString())
+    ) {
+      options.push({
+        value: position.orgId.toString(),
+        label: position.orgName,
+      });
+    }
+
     return options;
-  }, [editableOrgsResponse, isNationAdmin, selectedOrgType]);
+  }, [editableOrgsResponse, isNationAdmin, selectedOrgType, position]);
+
+  const [confirmedOrgAccess, setConfirmedOrgAccess] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing || !position?.orgId || confirmedOrgAccess) return;
+    if (editableOrgsResponse?.orgs?.some((o) => o.id === position.orgId)) {
+      setConfirmedOrgAccess(true);
+    }
+  }, [isEditing, position?.orgId, editableOrgsResponse, confirmedOrgAccess]);
+
+  const userCanEditOrg = isNationAdmin || !isEditing || confirmedOrgAccess;
+
   const actionText = isEditing ? "update" : "add";
   const actionTextPast = isEditing ? "updated" : "added";
 
@@ -248,7 +271,11 @@ export default function AdminPositionsModal({
                 control={form.control}
                 label="Org Level"
                 name="orgType"
-                options={[...ORG_TYPE_OPTIONS]}
+                options={
+                  isNationAdmin
+                    ? [...ORG_TYPE_OPTIONS]
+                    : ORG_TYPE_OPTIONS.filter((o) => o.value !== "nation")
+                }
                 disabled={isReadOnly}
               />
             </div>
@@ -279,7 +306,9 @@ export default function AdminPositionsModal({
                         value={selectedValue}
                         options={orgOptions}
                         searchPlaceholder={placeholder}
-                        disabled={isReadOnly || isEditing || !selectedOrgType}
+                        disabled={
+                          isReadOnly || !userCanEditOrg || !selectedOrgType
+                        }
                         hideClearButton={!isNationAdmin}
                         onSelect={(value) => {
                           const next = Array.isArray(value) ? value[0] : value;
