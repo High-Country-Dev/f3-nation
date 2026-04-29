@@ -413,6 +413,10 @@ export const positionRouter = {
                       .string()
                       .nullable()
                       .describe("User's last name"),
+                    avatarUrl: z
+                      .string()
+                      .nullable()
+                      .describe("User's avatar URL"),
                   }),
                 )
                 .describe("Users assigned to the position"),
@@ -463,6 +467,7 @@ export const positionRouter = {
           f3Name: schema.users.f3Name,
           firstName: schema.users.firstName,
           lastName: schema.users.lastName,
+          avatarUrl: schema.users.avatarUrl,
         })
         .from(schema.positionsXOrgsXUsers)
         .innerJoin(
@@ -482,6 +487,7 @@ export const positionRouter = {
             f3Name: a.f3Name,
             firstName: a.firstName,
             lastName: a.lastName,
+            avatarUrl: a.avatarUrl,
           });
           return acc;
         },
@@ -492,6 +498,7 @@ export const positionRouter = {
             f3Name: string | null;
             firstName: string | null;
             lastName: string | null;
+            avatarUrl: string | null;
           }[]
         >,
       );

@@ -47,6 +47,7 @@ export enum DeleteType {
   SECTOR = "SECTOR",
   NATION = "NATION",
   POSITION = "POSITION",
+  ASSIGNMENT = "ASSIGNMENT",
 }
 
 export const eventDefaults = {
