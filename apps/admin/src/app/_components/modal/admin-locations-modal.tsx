@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
-import { COUNTRIES, DEFAULT_CENTER, Z_INDEX } from "@acme/shared/app/constants";
+import { COUNTRIES, Z_INDEX } from "@acme/shared/app/constants";
 import { safeParseFloat, safeParseInt } from "@acme/shared/common/functions";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
@@ -86,8 +86,8 @@ export default function AdminLocationsModal({
   const form = useForm({
     schema: LocationInsertSchema.omit({ orgId: true }).extend({
       regionId: z.number(),
-      longitude: z.string(),
-      latitude: z.string(),
+      longitude: z.string().min(1, { message: "Longitude is required" }),
+      latitude: z.string().min(1, { message: "Latitude is required" }),
     }),
   });
   const formLatitude = form.watch("latitude");
@@ -101,12 +101,9 @@ export default function AdminLocationsModal({
       description: location?.description ?? "",
       isActive: location?.isActive ?? true,
       regionId: location?.regionId ?? undefined,
-      latitude: location?.latitude
-        ? location.latitude.toString()
-        : DEFAULT_CENTER[0].toString(),
-      longitude: location?.longitude
-        ? location.longitude.toString()
-        : DEFAULT_CENTER[1].toString(),
+      latitude: location?.latitude != null ? location.latitude.toString() : "",
+      longitude:
+        location?.longitude != null ? location.longitude.toString() : "",
       addressStreet: location?.addressStreet ?? null,
       addressStreet2: location?.addressStreet2 ?? null,
       addressCity: location?.addressCity ?? null,
@@ -124,13 +121,6 @@ export default function AdminLocationsModal({
         closeModal();
         toast.success("Successfully updated location");
         router.refresh();
-      },
-      onError: (err) => {
-        toast.error(
-          err instanceof ORPCError && err?.code === "UNAUTHORIZED"
-            ? "You must be logged in to update users"
-            : "Failed to update user",
-        );
       },
     }),
   );
@@ -167,14 +157,31 @@ export default function AdminLocationsModal({
                         toast.error("Region not found");
                         return;
                       }
+                      const latitude = safeParseFloat(data.latitude);
+                      const longitude = safeParseFloat(data.longitude);
+
+                      if (latitude == null || longitude == null) {
+                        toast.error(
+                          "Please set a location on the map before saving",
+                        );
+                        return;
+                      }
+
                       await crupdateLocation.mutateAsync({
                         ...data,
                         orgId: data.regionId,
-                        latitude: safeParseFloat(data.latitude),
-                        longitude: safeParseFloat(data.longitude),
+                        latitude,
+                        longitude,
                       });
                     } catch (error) {
-                      toast.error("Failed to update location");
+                      toast.error(
+                        error instanceof ORPCError &&
+                          error?.code === "UNAUTHORIZED"
+                          ? "You must be logged in to update locations"
+                          : error instanceof ORPCError && error.message
+                            ? error.message
+                            : "Failed to update location",
+                      );
                       console.error(error);
                     } finally {
                       setIsSubmitting(false);
