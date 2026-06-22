@@ -114,13 +114,27 @@ export default function AdminLocationsModal({
     });
   }, [form, location]);
 
+  const isEditing = !!location?.id;
+  const actionText = isEditing ? "update" : "add";
+  const actionTextPast = isEditing ? "updated" : "added";
+  const showDeleteButton = isEditing && location?.isActive !== false;
+
   const crupdateLocation = useMutation(
     orpc.location.crupdate.mutationOptions({
       onSuccess: async () => {
         await invalidateQueries("location");
         closeModal();
-        toast.success("Successfully updated location");
+        toast.success(`Successfully ${actionTextPast} location`);
         router.refresh();
+        setIsSubmitting(false);
+      },
+      onError: (err) => {
+        toast.error(
+          err instanceof ORPCError && err?.code === "UNAUTHORIZED"
+            ? `You are not authorized to ${actionText} this location`
+            : `Failed to ${actionText} location`,
+        );
+        setIsSubmitting(false);
       },
     }),
   );
@@ -134,7 +148,7 @@ export default function AdminLocationsModal({
       <DialogContent
         style={{ zIndex: Z_INDEX.HOW_TO_JOIN_MODAL }}
         className={cn(
-          `max-w-[95%] rounded-lg sm:max-w-[90%] lg:max-w-[1024px] max-h-[90vh] overflow-y-auto`,
+          `max-h-[90vh] max-w-[95%] overflow-y-auto rounded-lg sm:max-w-[90%] lg:max-w-[1024px]`,
         )}
       >
         <DialogHeader>
@@ -191,6 +205,7 @@ export default function AdminLocationsModal({
                     toast.error("Failed to update location");
                     console.log(error);
                     setIsSubmitting(false);
+                    return;
                   },
                 )}
                 className="space-y-4"
@@ -550,24 +565,26 @@ export default function AdminLocationsModal({
                       </Button>
                     </div>
                   </div>
-                  <div className="w-full px-2">
-                    <div className="flex space-x-4 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          closeModal();
-                          openModal(ModalType.ADMIN_DELETE_CONFIRMATION, {
-                            id: location?.id ?? -1,
-                            type: DeleteType.LOCATION,
-                          });
-                        }}
-                        className="w-full"
-                      >
-                        Delete Location
-                      </Button>
+                  {showDeleteButton && (
+                    <div className="w-full px-2">
+                      <div className="flex space-x-4 pt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            closeModal();
+                            openModal(ModalType.ADMIN_DELETE_CONFIRMATION, {
+                              id: location?.id ?? -1,
+                              type: DeleteType.LOCATION,
+                            });
+                          }}
+                          className="w-full"
+                        >
+                          Deactivate Location
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   {!isProd && (
                     <div className="w-full px-2">
                       <div className="flex space-x-4 pt-4">
