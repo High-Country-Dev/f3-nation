@@ -1,13 +1,15 @@
 name: Preview Environment
 
-# Per-PR Cloud Run preview environments (AI-SDLC sandbox pilot, F3-56).
+# Per-PR Cloud Run preview environments (AI-SDLC sandbox pilot, F3-56 + F3-57).
 # - Opt-in: PRs only get an environment while they carry the `preview` label.
-# - Scale-to-zero, min 0 / max 1 instance, so an idle preview costs ~nothing.
+# - Stack per PR: pr-<n>-api (api app + seeded Postgres sidecar on localhost,
+#   F3-57) and pr-<n>-map pointed at it. Scale-to-zero, max 1 instance.
+# - The DB is baked at deploy time: drizzle migrations + the deterministic
+#   local seed (packages/db/src/local-seed.ts) are dumped into a postgres
+#   image; PGDATA lives on an in-memory volume, so every cold start restores
+#   the identical dataset. Ephemeral by design — E2E needs determinism.
 # - Torn down when the PR closes or merges; a daily reaper deletes any
 #   preview service older than 7 days as a backstop.
-# - Pilot scope: the map app only. Runtime env vars are CI-style mocks until
-#   per-PR databases (F3-57) land, so the service boots and serves but has no
-#   live data behind it.
 
 on:
   pull_request:
@@ -46,6 +48,8 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: ./.github/actions/setup
+
       - name: Authenticate to GCP
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
@@ -64,30 +68,88 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          SERVICE="pr-${PR}-map"
-          IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${AR_REPO}/f3-map:pr-${PR}-${SHA::7}"
           PROJECT_NUMBER=$(gcloud projects describe "${PROJECT}" --format 'value(projectNumber)')
-          # Cloud Run URLs are deterministic, so the service can know its own
-          # public URL before it exists.
-          echo "service=${SERVICE}" >> "$GITHUB_OUTPUT"
-          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
-          echo "url=https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app" >> "$GITHUB_OUTPUT"
+          TAG="pr-${PR}-${SHA::7}"
+          {
+            echo "service_map=pr-${PR}-map"
+            echo "service_api=pr-${PR}-api"
+            echo "image_map=${REGION}-docker.pkg.dev/${PROJECT}/${AR_REPO}/f3-map:${TAG}"
+            echo "image_api=${REGION}-docker.pkg.dev/${PROJECT}/${AR_REPO}/f3-api:${TAG}"
+            echo "image_db=${REGION}-docker.pkg.dev/${PROJECT}/${AR_REPO}/f3-preview-db:${TAG}"
+            # Cloud Run URLs are deterministic, so services can know their own
+            # public URLs before they exist.
+            echo "url_map=https://pr-${PR}-map-${PROJECT_NUMBER}.${REGION}.run.app"
+            echo "url_api=https://pr-${PR}-api-${PROJECT_NUMBER}.${REGION}.run.app"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Build and push image (map)
+      - name: Build seeded database dump
+        run: |
+          docker run -d --name seed-pg \
+            -e POSTGRES_USER=f3local -e POSTGRES_PASSWORD=f3local -e POSTGRES_DB=f3nation \
+            -p 5433:5432 postgres:18
+          until docker exec seed-pg pg_isready -U f3local -d f3nation >/dev/null 2>&1; do sleep 1; done
+          # db scripts load env via dotenv from packages/env/.env
+          echo 'DATABASE_URL=postgresql://f3local:f3local@localhost:5433/f3nation' > packages/env/.env
+          # CI= re-enables migrate.ts (it no-ops when CI is set);
+          # SKIP_ENV_VALIDATION keeps @acme/env from demanding the full var set.
+          CI= SKIP_ENV_VALIDATION=1 pnpm db:migrate
+          CI= SKIP_ENV_VALIDATION=1 pnpm db:seed:local
+          docker exec seed-pg pg_dump -U f3local --no-owner --no-privileges f3nation \
+            > .github/preview/seed.sql
+          docker rm -f seed-pg
+          wc -l .github/preview/seed.sql
+
+      - name: Build and push images
         run: |
           TURBO_VERSION=$(grep '^  turbo:' pnpm-workspace.yaml | awk '{print $2}')
-          docker build \
-            --platform=linux/amd64 \
+          docker build --platform=linux/amd64 \
+            --file .github/preview/preview-db.Dockerfile \
+            --tag "${{ steps.meta.outputs.image_db }}" \
+            .github/preview
+          docker build --platform=linux/amd64 \
+            --file apps/api/Dockerfile \
+            --build-arg TURBO_VERSION="${TURBO_VERSION}" \
+            --tag "${{ steps.meta.outputs.image_api }}" \
+            .
+          docker build --platform=linux/amd64 \
             --file apps/map/Dockerfile \
             --build-arg TURBO_VERSION="${TURBO_VERSION}" \
-            --tag "${{ steps.meta.outputs.image }}" \
+            --tag "${{ steps.meta.outputs.image_map }}" \
             .
-          docker push "${{ steps.meta.outputs.image }}"
+          docker push "${{ steps.meta.outputs.image_db }}"
+          docker push "${{ steps.meta.outputs.image_api }}"
+          docker push "${{ steps.meta.outputs.image_map }}"
 
-      - name: Deploy preview service
+      - name: Deploy api + DB sidecar
+        env:
+          SERVICE_API: ${{ steps.meta.outputs.service_api }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          API_IMAGE: ${{ steps.meta.outputs.image_api }}
+          DB_IMAGE: ${{ steps.meta.outputs.image_db }}
+          API_URL: ${{ steps.meta.outputs.url_api }}
+          MAP_URL: ${{ steps.meta.outputs.url_map }}
         run: |
-          gcloud run deploy "${{ steps.meta.outputs.service }}" \
-            --image "${{ steps.meta.outputs.image }}" \
+          envsubst '${SERVICE_API} ${PR_NUMBER} ${RUNTIME_SA} ${API_IMAGE} ${DB_IMAGE} ${API_URL} ${MAP_URL}' \
+            < .github/preview/api-service.template.yaml > /tmp/api-service.yaml
+          gcloud run services replace /tmp/api-service.yaml \
+            --region "${REGION}" --project "${PROJECT}" --quiet
+          gcloud run services add-iam-policy-binding "${SERVICE_API}" \
+            --region "${REGION}" --project "${PROJECT}" \
+            --member=allUsers --role=roles/run.invoker --quiet
+          # services replace returns before the revision is ready — poll.
+          for i in $(seq 1 60); do
+            READY=$(gcloud run services describe "${SERVICE_API}" \
+              --region "${REGION}" --project "${PROJECT}" \
+              --format 'value(status.conditions[0].status)')
+            [ "${READY}" = "True" ] && break
+            [ "$i" = "60" ] && { echo "api service never became ready"; exit 1; }
+            sleep 5
+          done
+
+      - name: Deploy map
+        run: |
+          gcloud run deploy "${{ steps.meta.outputs.service_map }}" \
+            --image "${{ steps.meta.outputs.image_map }}" \
             --region "${REGION}" \
             --project "${PROJECT}" \
             --service-account "${RUNTIME_SA}" \
@@ -97,18 +159,34 @@ jobs:
             --cpu=1 \
             --memory=1Gi \
             --labels "preview-env=true,pr-number=${{ github.event.pull_request.number }}" \
-            --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;SKIP_SSG=1;DATABASE_URL=postgres://postgres:postgres@localhost:5432/f3_preview;AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=preview-api-key-placeholder;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=http://localhost:3001;NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url }};NEXT_PUBLIC_GOOGLE_API_KEY=preview-google-key;NEXT_PUBLIC_MAP_API_KEY=preview-map-key;F3_API_BASE_URL=https://placeholder-api.f3nation.dev;F3_MAP_BASE_URL=${{ steps.meta.outputs.url }};F3_GOOGLE_API_KEY=preview-google-key;F3_MAP_API_KEY=preview-map-key;GCS_CREDENTIALS=eyJjbGllbnRfZW1haWwiOiJtb2NrQGV4YW1wbGUuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJwcml2YXRlX2tleSI6Ii0tLS0tQkVHSU4gUlNBIFBSSVZBVEUgS0VZLS0tLS1cbmZha2Vcbi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tIn0=" \
+            --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;F3_API_BASE_URL=${{ steps.meta.outputs.url_api }};F3_MAP_BASE_URL=${{ steps.meta.outputs.url_map }};F3_MAP_API_KEY=local-map-key;F3_GOOGLE_API_KEY=preview-google-key;AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=local-api-key;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=${{ steps.meta.outputs.url_api }};NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url_map }};NEXT_PUBLIC_GOOGLE_API_KEY=preview-google-key;NEXT_PUBLIC_MAP_API_KEY=preview-map-key;GCS_CREDENTIALS=eyJjbGllbnRfZW1haWwiOiJtb2NrQGV4YW1wbGUuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJwcml2YXRlX2tleSI6Ii0tLS0tQkVHSU4gUlNBIFBSSVZBVEUgS0VZLS0tLS1cbmZha2Vcbi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tIn0=" \
             --quiet
-          URL=$(gcloud run services describe "${{ steps.meta.outputs.service }}" \
-            --region "${REGION}" --project "${PROJECT}" --format 'value(status.url)')
-          echo "PREVIEW_URL=${URL}" >> "$GITHUB_ENV"
 
-      - name: Upsert PR comment with preview URL
+      - name: Smoke test
+        run: |
+          # api liveness (root redirects to /docs)
+          API_CODE=$(curl -sS -o /dev/null -w '%{http_code}' -L "${{ steps.meta.outputs.url_api }}/")
+          echo "api / -> ${API_CODE}"
+          # map: first hit may serve the (empty) build-time ISR page and
+          # trigger regeneration against the live api; retry until 200.
+          for i in $(seq 1 10); do
+            MAP_CODE=$(curl -sS -o /dev/null -w '%{http_code}' "${{ steps.meta.outputs.url_map }}/")
+            echo "map / -> ${MAP_CODE} (attempt $i)"
+            [ "${MAP_CODE}" = "200" ] && exit 0
+            sleep 5
+          done
+          echo "map never returned 200"
+          exit 1
+
+      - name: Upsert PR comment with preview URLs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          URL_MAP: ${{ steps.meta.outputs.url_map }}
+          URL_API: ${{ steps.meta.outputs.url_api }}
         with:
           script: |
             const marker = '<!-- preview-env -->';
-            const body = `${marker}\n### 🚀 Preview environment\n\n| App | URL |\n| --- | --- |\n| map | ${process.env.PREVIEW_URL} |\n\nDeployed from ${context.payload.pull_request.head.sha.slice(0, 7)}. Scale-to-zero; torn down on close or after 7 days.`;
+            const body = `${marker}\n### 🚀 Preview environment\n\n| App | URL |\n| --- | --- |\n| map | ${process.env.URL_MAP} |\n| api | ${process.env.URL_API} |\n\nDeployed from ${context.payload.pull_request.head.sha.slice(0, 7)} with a seeded ephemeral database (deterministic; resets on cold start). Scale-to-zero; torn down on close or after 7 days.`;
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -150,17 +228,18 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
-      - name: Delete preview service (if any)
+      - name: Delete preview services (if any)
         env:
           PR: ${{ github.event.pull_request.number }}
         run: |
-          SERVICE="pr-${PR}-map"
-          if gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --format 'value(metadata.name)' >/dev/null 2>&1; then
-            gcloud run services delete "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --quiet
-            echo "Deleted ${SERVICE}"
-          else
-            echo "No preview service ${SERVICE} to delete"
-          fi
+          for SERVICE in "pr-${PR}-map" "pr-${PR}-api"; do
+            if gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --format 'value(metadata.name)' >/dev/null 2>&1; then
+              gcloud run services delete "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --quiet
+              echo "Deleted ${SERVICE}"
+            else
+              echo "No preview service ${SERVICE} to delete"
+            fi
+          done
 
   reaper:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
