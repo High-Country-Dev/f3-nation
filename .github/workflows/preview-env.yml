@@ -66,8 +66,12 @@ jobs:
         run: |
           SERVICE="pr-${PR}-map"
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${AR_REPO}/f3-map:pr-${PR}-${SHA::7}"
+          PROJECT_NUMBER=$(gcloud projects describe "${PROJECT}" --format 'value(projectNumber)')
+          # Cloud Run URLs are deterministic, so the service can know its own
+          # public URL before it exists.
           echo "service=${SERVICE}" >> "$GITHUB_OUTPUT"
           echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "url=https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app" >> "$GITHUB_OUTPUT"
 
       - name: Build and push image (map)
         run: |
@@ -93,7 +97,7 @@ jobs:
             --cpu=1 \
             --memory=1Gi \
             --labels "preview-env=true,pr-number=${{ github.event.pull_request.number }}" \
-            --set-env-vars "F3_CHANNEL=preview,NEXT_PUBLIC_CHANNEL=preview,DATABASE_URL=postgres://postgres:postgres@localhost:5432/f3_preview,AUTH_SECRET=preview-auth-secret-placeholder-32c,EMAIL_SERVER=smtp://user:pass@localhost:587,EMAIL_FROM=preview@example.com,EMAIL_ADMIN_DESTINATIONS=preview@example.com,API_KEY=preview-api-key-placeholder,SUPER_ADMIN_API_KEY=preview-super-admin-key,NEXT_PUBLIC_API_URL=http://localhost:3001,NEXT_PUBLIC_MAP_URL=http://localhost:3000,NEXT_PUBLIC_GOOGLE_API_KEY=preview-google-key,NEXT_PUBLIC_MAP_API_KEY=preview-map-key" \
+            --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;SKIP_SSG=1;DATABASE_URL=postgres://postgres:postgres@localhost:5432/f3_preview;AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=preview-api-key-placeholder;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=http://localhost:3001;NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url }};NEXT_PUBLIC_GOOGLE_API_KEY=preview-google-key;NEXT_PUBLIC_MAP_API_KEY=preview-map-key;F3_API_BASE_URL=https://placeholder-api.f3nation.dev;F3_MAP_BASE_URL=${{ steps.meta.outputs.url }};F3_GOOGLE_API_KEY=preview-google-key;F3_MAP_API_KEY=preview-map-key;GCS_CREDENTIALS=eyJjbGllbnRfZW1haWwiOiJtb2NrQGV4YW1wbGUuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJwcml2YXRlX2tleSI6Ii0tLS0tQkVHSU4gUlNBIFBSSVZBVEUgS0VZLS0tLS1cbmZha2Vcbi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tIn0=" \
             --quiet
           URL=$(gcloud run services describe "${{ steps.meta.outputs.service }}" \
             --region "${REGION}" --project "${PROJECT}" --format 'value(status.url)')
