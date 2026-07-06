@@ -29,6 +29,7 @@ export default {
 
         // tooling
         "eslint",
+        "playwright",
         "prettier",
         "tsconfig",
         "scripts",

@@ -50,6 +50,9 @@ jobs:
       contents: read
       id-token: write
       pull-requests: write
+    outputs:
+      url_map: ${{ steps.meta.outputs.url_map }}
+      url_api: ${{ steps.meta.outputs.url_api }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
@@ -240,6 +243,45 @@ jobs:
                 body,
               });
             }
+
+  e2e:
+    # Blocking-tier Playwright suite (F3-59) against the freshly deployed
+    # preview environment. Same gating as deploy: PRs from this repo carrying
+    # the `preview` label, never on close.
+    needs: deploy
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action != 'closed' &&
+      contains(github.event.pull_request.labels.*.name, 'preview') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - name: Install Playwright Chromium
+        run: pnpm -F f3-map exec playwright install --with-deps chromium
+
+      - name: Run blocking-tier E2E suite
+        env:
+          E2E_BASE_URL: ${{ needs.deploy.outputs.url_map }}
+        run: pnpm -F f3-map... test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-artifacts-pr-${{ github.event.pull_request.number }}
+          path: |
+            apps/map/playwright-report/
+            apps/map/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
   teardown:
     if: >-
