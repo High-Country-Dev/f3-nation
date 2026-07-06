@@ -173,8 +173,9 @@ jobs:
           API_URL: ${{ steps.meta.outputs.url_api }}
           MAP_URL: ${{ steps.meta.outputs.url_map }}
           AUTH_URL: ${{ steps.meta.outputs.url_auth }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.PREVIEW_POSTHOG_KEY }}
         run: |
-          envsubst '${SERVICE_API} ${PR_NUMBER} ${RUNTIME_SA} ${API_IMAGE} ${DB_IMAGE} ${API_URL} ${MAP_URL} ${AUTH_URL}' \
+          envsubst '${SERVICE_API} ${PR_NUMBER} ${RUNTIME_SA} ${API_IMAGE} ${DB_IMAGE} ${API_URL} ${MAP_URL} ${AUTH_URL} ${NEXT_PUBLIC_POSTHOG_KEY}' \
             < .github/preview/api-service.template.yaml > /tmp/api-service.yaml
           gcloud run services replace /tmp/api-service.yaml \
             --region "${REGION}" --project "${PROJECT}" --quiet
@@ -251,7 +252,7 @@ jobs:
             --cpu=1 \
             --memory=1Gi \
             --labels "preview-env=true,pr-number=${{ github.event.pull_request.number }}" \
-            --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;F3_API_BASE_URL=${{ steps.meta.outputs.url_api }};F3_MAP_BASE_URL=${{ steps.meta.outputs.url_map }};F3_MAP_API_KEY=local-map-key;F3_GOOGLE_API_KEY=${MAPS_KEY};AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=local-api-key;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=${{ steps.meta.outputs.url_api }};NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url_map }};NEXT_PUBLIC_AUTH_URL=${{ steps.meta.outputs.url_auth }};NEXT_PUBLIC_GOOGLE_API_KEY=${MAPS_KEY};NEXT_PUBLIC_MAP_API_KEY=preview-map-key;GCS_CREDENTIALS=${FAKE_GCS}" \
+            --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;F3_API_BASE_URL=${{ steps.meta.outputs.url_api }};F3_MAP_BASE_URL=${{ steps.meta.outputs.url_map }};F3_MAP_API_KEY=local-map-key;F3_GOOGLE_API_KEY=${MAPS_KEY};AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=local-api-key;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=${{ steps.meta.outputs.url_api }};NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url_map }};NEXT_PUBLIC_AUTH_URL=${{ steps.meta.outputs.url_auth }};NEXT_PUBLIC_GOOGLE_API_KEY=${MAPS_KEY};NEXT_PUBLIC_MAP_API_KEY=preview-map-key;NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.PREVIEW_POSTHOG_KEY }};GCS_CREDENTIALS=${FAKE_GCS}" \
             --quiet
 
       - name: Sync Maps key referrers to live previews
