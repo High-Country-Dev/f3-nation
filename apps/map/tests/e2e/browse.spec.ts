@@ -27,10 +27,9 @@ import { expect, test } from "@playwright/test";
  * a stable signal (e.g. reading clipboard + map-store state) to be
  * deterministic. Add it once a reliable centering assertion exists.
  *
- * TODO(F3-59 follow-up): specs/map-update-request-flow.md (edit mode /
- * update requests) is OUT OF SCOPE for this suite — its critical paths need
- * authenticated editor/admin sessions and the preview stack does not deploy
- * the auth app yet.
+ * specs/map-update-request-flow.md (edit mode / update requests) is covered
+ * by rbac.spec.ts in this directory, which exercises the RBAC-critical paths
+ * directly against the api preview (E2E_API_URL) using seeded API keys.
  */
 
 /** Type a query and click the matching F3 workout result in the popover. */
