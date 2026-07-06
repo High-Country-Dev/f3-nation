@@ -325,7 +325,12 @@ jobs:
               });
             }
 
-  e2e:
+  # Two-tier E2E model (F3-59/F3-60, docs/E2E_TIERS.md):
+  #   - e2e-blocking: small, must-never-break suite. Red means no merge.
+  #   - e2e-advisory: everything else. Runs and reports, never blocks
+  #     (continue-on-error at the job level); failures are triage input
+  #     (F3-61 auto-triage will consume them).
+  e2e-blocking:
     # Blocking-tier Playwright suite (F3-59) against the freshly deployed
     # preview environment. Same gating as deploy: PRs from this repo carrying
     # the `preview` label, never on close.
@@ -360,7 +365,47 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: playwright-artifacts-pr-${{ github.event.pull_request.number }}
+          name: playwright-blocking-artifacts-pr-${{ github.event.pull_request.number }}
+          path: |
+            apps/map/playwright-report/
+            apps/map/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  e2e-advisory:
+    # Advisory-tier Playwright suite (F3-60). continue-on-error keeps the
+    # check (and the whole run) green even when it fails — failures are
+    # surfaced via the uploaded artifacts and triaged, never merge-blocking.
+    needs: deploy
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action != 'closed' &&
+      contains(github.event.pull_request.labels.*.name, 'preview') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - name: Install Playwright Chromium
+        run: pnpm -F f3-map exec playwright install --with-deps chromium
+
+      - name: Run advisory-tier E2E suite
+        env:
+          E2E_BASE_URL: ${{ needs.deploy.outputs.url_map }}
+        run: pnpm -F f3-map... test:e2e:advisory
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-advisory-artifacts-pr-${{ github.event.pull_request.number }}
           path: |
             apps/map/playwright-report/
             apps/map/test-results/
