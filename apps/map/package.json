@@ -12,7 +12,8 @@
     "start": "pnpm with-env next start",
     "typecheck": "tsc --noEmit",
     "test": "SKIP_ENV_VALIDATION=1 pnpm with-env vitest --run --coverage \"$@\"",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=blocking",
+    "test:e2e:advisory": "playwright test --project=advisory",
     "test:watch": "SKIP_ENV_VALIDATION=1 pnpm with-env vitest -w \"$@\"",
     "with-env": "dotenv -e .env --"
   },
