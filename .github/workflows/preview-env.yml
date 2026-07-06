@@ -10,6 +10,9 @@ name: Preview Environment
 #   the identical dataset. Ephemeral by design — E2E needs determinism.
 # - Torn down when the PR closes or merges; a daily reaper deletes any
 #   preview service older than 7 days as a backstop.
+# - Nothing is lost on teardown: previews are fully derived state. Remove and
+#   re-add the `preview` label (or push a commit) to recreate one at the same
+#   URLs; exact old builds stay in Artifact Registry tagged pr-<n>-<sha>.
 
 on:
   pull_request:
@@ -208,7 +211,7 @@ jobs:
         with:
           script: |
             const marker = '<!-- preview-env -->';
-            const body = `${marker}\n### 🚀 Preview environment\n\n| App | URL |\n| --- | --- |\n| map | ${process.env.URL_MAP} |\n| api | ${process.env.URL_API} |\n\nDeployed from ${context.payload.pull_request.head.sha.slice(0, 7)} with a seeded ephemeral database (deterministic; resets on cold start). Scale-to-zero; torn down on close or after 7 days.`;
+            const body = `${marker}\n### 🚀 Preview environment\n\n| App | URL |\n| --- | --- |\n| map | ${process.env.URL_MAP} |\n| api | ${process.env.URL_API} |\n\nDeployed from ${context.payload.pull_request.head.sha.slice(0, 7)} with a seeded ephemeral database (deterministic; resets on cold start). Scale-to-zero; torn down on close or after 7 days.\n\n> Torn down and need it back? Remove and re-add the \`preview\` label (or push a commit) — previews are fully derived state and rebuild identically at the same URLs.`;
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
