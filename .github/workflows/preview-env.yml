@@ -160,6 +160,12 @@ jobs:
           # and living in the budget-capped sandbox project.
           MAPS_KEY: ${{ secrets.PREVIEW_GOOGLE_MAPS_API_KEY }}
         run: |
+          # GCS_CREDENTIALS must be non-empty to satisfy env validation, but
+          # previews never touch GCS. Built here from plainly fake JSON so
+          # secret scanners (and humans) can see there is nothing real —
+          # committing the equivalent base64 blob trips high-entropy
+          # detectors (GitGuardian, 2026-07-06).
+          FAKE_GCS=$(printf '{"client_email":"fake-not-a-real-credential@preview.invalid","private_key":"THIS-IS-A-FAKE-PLACEHOLDER-FOR-PREVIEW-ENVS"}' | base64 -w0)
           gcloud run deploy "${{ steps.meta.outputs.service_map }}" \
             --image "${{ steps.meta.outputs.image_map }}" \
             --region "${REGION}" \
@@ -171,7 +177,7 @@ jobs:
             --cpu=1 \
             --memory=1Gi \
             --labels "preview-env=true,pr-number=${{ github.event.pull_request.number }}" \
-            --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;F3_API_BASE_URL=${{ steps.meta.outputs.url_api }};F3_MAP_BASE_URL=${{ steps.meta.outputs.url_map }};F3_MAP_API_KEY=local-map-key;F3_GOOGLE_API_KEY=${MAPS_KEY};AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=local-api-key;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=${{ steps.meta.outputs.url_api }};NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url_map }};NEXT_PUBLIC_GOOGLE_API_KEY=${MAPS_KEY};NEXT_PUBLIC_MAP_API_KEY=preview-map-key;GCS_CREDENTIALS=eyJjbGllbnRfZW1haWwiOiJtb2NrQGV4YW1wbGUuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJwcml2YXRlX2tleSI6Ii0tLS0tQkVHSU4gUlNBIFBSSVZBVEUgS0VZLS0tLS1cbmZha2Vcbi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tIn0=" \
+            --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;F3_API_BASE_URL=${{ steps.meta.outputs.url_api }};F3_MAP_BASE_URL=${{ steps.meta.outputs.url_map }};F3_MAP_API_KEY=local-map-key;F3_GOOGLE_API_KEY=${MAPS_KEY};AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=local-api-key;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=${{ steps.meta.outputs.url_api }};NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url_map }};NEXT_PUBLIC_GOOGLE_API_KEY=${MAPS_KEY};NEXT_PUBLIC_MAP_API_KEY=preview-map-key;GCS_CREDENTIALS=${FAKE_GCS}" \
             --quiet
 
       - name: Sync Maps key referrers to live previews
