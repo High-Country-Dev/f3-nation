@@ -104,9 +104,10 @@ test.describe("map browse & search extras (anonymous, advisory)", () => {
       .first();
     await control.click();
 
-    // …the control goes to its muted/disabled treatment instead of erroring
-    // (`text-muted`, not the usual `text-muted-foreground`)…
-    await expect(control.locator("svg")).toHaveClass(/(^|\s)text-muted(\s|$)/);
+    // The muted icon treatment (`text-muted`) only applies when the
+    // Permissions API reports "denied"; Playwright's grantPermissions([])
+    // leaves Chromium in "prompt", so that styling isn't deterministic here
+    // (confirmed by the first live run). The observable AC-14 contract:
     // …no geolocation marker is rendered…
     await expect(page.getByTestId("geolocation-marker")).toHaveCount(0);
     // …and the map view is unchanged: same route, same nearby anchor.
