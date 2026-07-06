@@ -30,6 +30,10 @@ env:
   PROJECT: f3-nation-dev
   AR_REPO: cloud-run-builds
   RUNTIME_SA: preview-runtime@f3-nation-dev.iam.gserviceaccount.com
+  # Browser Maps key (referrer-locked, Maps JS + Places only). Google ignores
+  # mid-hostname wildcards at enforcement time, so each job syncs the key's
+  # allowed-referrer list to exactly the live preview services.
+  MAPS_KEY_NAME: projects/163365835674/locations/global/keys/07ac2c96-432e-4c37-9496-cd10beef5deb
 
 jobs:
   deploy:
@@ -167,6 +171,19 @@ jobs:
             --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;F3_API_BASE_URL=${{ steps.meta.outputs.url_api }};F3_MAP_BASE_URL=${{ steps.meta.outputs.url_map }};F3_MAP_API_KEY=local-map-key;F3_GOOGLE_API_KEY=${MAPS_KEY};AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=local-api-key;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=${{ steps.meta.outputs.url_api }};NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url_map }};NEXT_PUBLIC_GOOGLE_API_KEY=${MAPS_KEY};NEXT_PUBLIC_MAP_API_KEY=preview-map-key;GCS_CREDENTIALS=eyJjbGllbnRfZW1haWwiOiJtb2NrQGV4YW1wbGUuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJwcml2YXRlX2tleSI6Ii0tLS0tQkVHSU4gUlNBIFBSSVZBVEUgS0VZLS0tLS1cbmZha2Vcbi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tIn0=" \
             --quiet
 
+      - name: Sync Maps key referrers to live previews
+        run: |
+          PROJECT_NUMBER=$(gcloud projects describe "${PROJECT}" --format 'value(projectNumber)')
+          # Placeholder keeps the restriction list non-empty (an empty list
+          # would make the key unrestricted).
+          LIST="https://placeholder.invalid/*"
+          for S in $(gcloud run services list --region "${REGION}" --project "${PROJECT}" \
+              --filter "metadata.labels.preview-env=true" --format 'value(metadata.name)' | grep -- '-map$'); do
+            LIST="${LIST},https://${S}-${PROJECT_NUMBER}.${REGION}.run.app/*"
+          done
+          gcloud services api-keys update "${MAPS_KEY_NAME}" --project "${PROJECT}" \
+            --allowed-referrers="${LIST}" --quiet
+
       - name: Smoke test
         run: |
           # api liveness (root redirects to /docs)
@@ -246,6 +263,17 @@ jobs:
             fi
           done
 
+      - name: Sync Maps key referrers to live previews
+        run: |
+          PROJECT_NUMBER=$(gcloud projects describe "${PROJECT}" --format 'value(projectNumber)')
+          LIST="https://placeholder.invalid/*"
+          for S in $(gcloud run services list --region "${REGION}" --project "${PROJECT}" \
+              --filter "metadata.labels.preview-env=true" --format 'value(metadata.name)' | grep -- '-map$'); do
+            LIST="${LIST},https://${S}-${PROJECT_NUMBER}.${REGION}.run.app/*"
+          done
+          gcloud services api-keys update "${MAPS_KEY_NAME}" --project "${PROJECT}" \
+            --allowed-referrers="${LIST}" --quiet
+
   reaper:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -274,3 +302,14 @@ jobs:
             gcloud run services delete "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --quiet
             echo "Reaped ${SERVICE}"
           done
+
+      - name: Sync Maps key referrers to live previews
+        run: |
+          PROJECT_NUMBER=$(gcloud projects describe "${PROJECT}" --format 'value(projectNumber)')
+          LIST="https://placeholder.invalid/*"
+          for S in $(gcloud run services list --region "${REGION}" --project "${PROJECT}" \
+              --filter "metadata.labels.preview-env=true" --format 'value(metadata.name)' | grep -- '-map$'); do
+            LIST="${LIST},https://${S}-${PROJECT_NUMBER}.${REGION}.run.app/*"
+          done
+          gcloud services api-keys update "${MAPS_KEY_NAME}" --project "${PROJECT}" \
+            --allowed-referrers="${LIST}" --quiet
