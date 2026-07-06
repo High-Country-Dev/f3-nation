@@ -125,9 +125,9 @@ test.describe("map browse & search (anonymous)", () => {
     // Every seeded event is at 05:30 (AM), so PM deterministically empties
     // the list (AC-12 empty state).
     await pmButton.click();
-    await expect(
-      nearby.getByText("No locations found matching your filters"),
-    ).toBeVisible();
+    // Note: isAnyFilterActive() deliberately excludes am/pm, so this empty
+    // state renders WITHOUT the "matching your filters" suffix.
+    await expect(nearby.getByText(/No locations found/)).toBeVisible();
     await expect(nearby.getByText("The Dark Tower")).toBeHidden();
 
     // AM deactivates PM (mutually exclusive, AC-13) and matches everything.
