@@ -1852,6 +1852,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 10.5.0(jiti@2.7.0)
+      postgres:
+        specifier: 'catalog:'
+        version: 3.4.9
       prettier:
         specifier: 'catalog:'
         version: 3.8.4
