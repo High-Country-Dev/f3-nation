@@ -46,6 +46,12 @@ spec:
               value: ${API_URL}
             - name: NEXT_PUBLIC_MAP_URL
               value: ${MAP_URL}
+            # The auth preview's URL — packages/api verifies RS256 bearer
+            # JWTs against ${AUTH_URL}/.well-known/jwks.json (issuer check
+            # included), which is how E2E carries a signed-in identity to the
+            # api across run.app hosts. See docs/PREVIEW_AUTH.md.
+            - name: NEXT_PUBLIC_AUTH_URL
+              value: ${AUTH_URL}
             - name: NEXT_PUBLIC_CHANNEL
               value: branch
           resources:
