@@ -1,0 +1,192 @@
+name: Preview Environment
+
+# Per-PR Cloud Run preview environments (AI-SDLC sandbox pilot, F3-56).
+# - Opt-in: PRs only get an environment while they carry the `preview` label.
+# - Scale-to-zero, min 0 / max 1 instance, so an idle preview costs ~nothing.
+# - Torn down when the PR closes or merges; a daily reaper deletes any
+#   preview service older than 7 days as a backstop.
+# - Pilot scope: the map app only. Runtime env vars are CI-style mocks until
+#   per-PR databases (F3-57) land, so the service boots and serves but has no
+#   live data behind it.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, closed]
+  schedule:
+    - cron: "17 7 * * *" # daily TTL reaper
+  workflow_dispatch: # manual reaper run
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-env-${{ github.event.pull_request.number || 'reaper' }}
+  cancel-in-progress: false
+
+env:
+  REGION: us-central1
+  PROJECT: f3-nation-dev
+  AR_REPO: cloud-run-builds
+  RUNTIME_SA: preview-runtime@f3-nation-dev.iam.gserviceaccount.com
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action != 'closed' &&
+      contains(github.event.pull_request.labels.*.name, 'preview') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Authorize Docker to Artifact Registry
+        run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      - name: Compute image + service names
+        id: meta
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          SERVICE="pr-${PR}-map"
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${AR_REPO}/f3-map:pr-${PR}-${SHA::7}"
+          PROJECT_NUMBER=$(gcloud projects describe "${PROJECT}" --format 'value(projectNumber)')
+          # Cloud Run URLs are deterministic, so the service can know its own
+          # public URL before it exists.
+          echo "service=${SERVICE}" >> "$GITHUB_OUTPUT"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "url=https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image (map)
+        run: |
+          TURBO_VERSION=$(grep '^  turbo:' pnpm-workspace.yaml | awk '{print $2}')
+          docker build \
+            --platform=linux/amd64 \
+            --file apps/map/Dockerfile \
+            --build-arg TURBO_VERSION="${TURBO_VERSION}" \
+            --tag "${{ steps.meta.outputs.image }}" \
+            .
+          docker push "${{ steps.meta.outputs.image }}"
+
+      - name: Deploy preview service
+        run: |
+          gcloud run deploy "${{ steps.meta.outputs.service }}" \
+            --image "${{ steps.meta.outputs.image }}" \
+            --region "${REGION}" \
+            --project "${PROJECT}" \
+            --service-account "${RUNTIME_SA}" \
+            --allow-unauthenticated \
+            --min-instances=0 \
+            --max-instances=1 \
+            --cpu=1 \
+            --memory=1Gi \
+            --labels "preview-env=true,pr-number=${{ github.event.pull_request.number }}" \
+            --set-env-vars "^;^F3_CHANNEL=branch;NEXT_PUBLIC_CHANNEL=branch;SKIP_SSG=1;DATABASE_URL=postgres://postgres:postgres@localhost:5432/f3_preview;AUTH_SECRET=preview-auth-secret-placeholder-32c;EMAIL_SERVER=smtp://user:pass@localhost:587;EMAIL_FROM=preview@example.com;EMAIL_ADMIN_DESTINATIONS=preview@example.com;API_KEY=preview-api-key-placeholder;SUPER_ADMIN_API_KEY=preview-super-admin-key;NEXT_PUBLIC_API_URL=http://localhost:3001;NEXT_PUBLIC_MAP_URL=${{ steps.meta.outputs.url }};NEXT_PUBLIC_GOOGLE_API_KEY=preview-google-key;NEXT_PUBLIC_MAP_API_KEY=preview-map-key;F3_API_BASE_URL=https://placeholder-api.f3nation.dev;F3_MAP_BASE_URL=${{ steps.meta.outputs.url }};F3_GOOGLE_API_KEY=preview-google-key;F3_MAP_API_KEY=preview-map-key;GCS_CREDENTIALS=eyJjbGllbnRfZW1haWwiOiJtb2NrQGV4YW1wbGUuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJwcml2YXRlX2tleSI6Ii0tLS0tQkVHSU4gUlNBIFBSSVZBVEUgS0VZLS0tLS1cbmZha2Vcbi0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tIn0=" \
+            --quiet
+          URL=$(gcloud run services describe "${{ steps.meta.outputs.service }}" \
+            --region "${REGION}" --project "${PROJECT}" --format 'value(status.url)')
+          echo "PREVIEW_URL=${URL}" >> "$GITHUB_ENV"
+
+      - name: Upsert PR comment with preview URL
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const marker = '<!-- preview-env -->';
+            const body = `${marker}\n### 🚀 Preview environment\n\n| App | URL |\n| --- | --- |\n| map | ${process.env.PREVIEW_URL} |\n\nDeployed from ${context.payload.pull_request.head.sha.slice(0, 7)}. Scale-to-zero; torn down on close or after 7 days.`;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find((c) => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  teardown:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Delete preview service (if any)
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          SERVICE="pr-${PR}-map"
+          if gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --format 'value(metadata.name)' >/dev/null 2>&1; then
+            gcloud run services delete "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --quiet
+            echo "Deleted ${SERVICE}"
+          else
+            echo "No preview service ${SERVICE} to delete"
+          fi
+
+  reaper:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Delete preview services older than 7 days
+        run: |
+          CUTOFF=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          gcloud run services list \
+            --region "${REGION}" --project "${PROJECT}" \
+            --filter "metadata.labels.preview-env=true AND metadata.creationTimestamp<${CUTOFF}" \
+            --format 'value(metadata.name)' |
+          while read -r SERVICE; do
+            [ -z "${SERVICE}" ] && continue
+            gcloud run services delete "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --quiet
+            echo "Reaped ${SERVICE}"
+          done
