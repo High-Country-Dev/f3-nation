@@ -1,5 +1,18 @@
 # Observability Baseline Plan (F3-63)
 
+> **OWNER DECISION (2026-07-06, Declan):** Go **OTEL + PostHog**, drop Sentry.
+> This supersedes the "keep Sentry" recommendation below (kept for the
+> reasoning trail). Deciding facts: PostHog error tracking now ships a
+> ~100k-errors/mo free tier (vs Sentry's 5k) plus masked session replay,
+> product analytics (the browse-spec funnel), and OTLP-native Logs (GA
+> 2/2026); tracing hedge: export traces to **Cloud Trace** until PostHog
+> tracing exits alpha. The existing Sentry wiring is misconfigured anyway
+> (unmasked replay/PII, shared DSN, 100% sampling), so swap cost ≈ fix
+> cost. Migration: remove @sentry/nextjs from map+api, point
+> @acme/logger's error bridge at PostHog, wire posthog-js with masking ON
+> and per-product spend caps at $0.
+
+
 > Scouting + planning deliverable for the AI-SDLC pilot: an OpenTelemetry
 > baseline for the pilot apps (`map`, `api`, `admin`) and a PostHog-vs-Sentry
 > free-tier evaluation. This is a **plan**, not an implementation — each phase
