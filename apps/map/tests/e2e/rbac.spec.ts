@@ -10,8 +10,11 @@ import { expect, test } from "@playwright/test";
  *
  *   1. Non-editor submit → recorded `pending`            (§8.2, AC-8)
  *   2. Editor submit → auto-applied (`approved`)          (§8.3, AC-9)
- *   3. Non-editor reject is denied, request stays pending (§8.6, AC-15*)
- *   4. Unauthenticated submit is denied                   (§5 row 2)
+ *   3. Non-editor reject is denied, request stays pending (§5 reject row)
+ *   4. Cross-region editor reject is denied, request stays
+ *      pending (§8.6, AC-15) — plus the positive control: the same
+ *      region-scoped editor CAN reject inside its own region
+ *   5. Unauthenticated submit is denied                   (§5 row 2)
  *
  * HOW PROCEDURES ARE INVOKED: the api app serves every oRPC procedure that
  * declares a `.route()` through its OpenAPI handler (apps/api/src/app/
@@ -26,21 +29,21 @@ import { expect, test } from "@playwright/test";
  * plus the `client` header (required for API-key auth by getSession in
  * packages/api/src/shared.ts):
  *
- *   - local-slackbot-key → admin, scoped to the F3 Nation org
- *   - local-api-key      → editor, scoped to the F3 Nation org
- *   - local-map-key      → NO role (read-only tier is the absence of a role)
+ *   - local-slackbot-key     → admin, scoped to the F3 Nation org
+ *   - local-api-key          → editor, scoped to the F3 Nation org
+ *   - local-boone-editor-key → editor, scoped to the BOONE REGION org only
+ *   - local-map-key          → NO role (read-only tier is the absence of a role)
  *
- * SEED SCOPING CAVEAT (accuracy over forcing the spec's exact matrix): every
- * role-bearing seeded principal — both API keys and all dev users — has its
- * role on the NATION org (packages/db/src/local-seed-lib/users.ts seeds
- * roles_x_api_keys_x_org / roles_x_users_x_org with orgId = nationId), and
- * checkHasRoleOnOrg accepts a role on any ancestor org. So the seeded
- * "editor" can edit BOTH seeded regions (Boone and F3 Charlotte), and
- * AC-15's precise case — an editor of region S rejecting in region R — has
- * no deterministic seeded principal. Test 3 therefore exercises the
- * adjacent deny from the §5 reject row: an authenticated NON-editor
- * (local-map-key) is refused with UNAUTHORIZED and the request stays
- * `pending` (verified with the admin key).
+ * SEED SCOPING: checkHasRoleOnOrg accepts a role on any ancestor org, so the
+ * nation-scoped principals can edit BOTH seeded regions (Boone and
+ * F3 Charlotte). local-boone-editor-key is the region-scoped principal
+ * (packages/db/src/local-seed-lib/users.ts attaches its editor role to the
+ * Boone region org, not the nation), which makes AC-15's precise case — an
+ * editor of region S rejecting in region R — deterministically testable:
+ * Boone is not an ancestor of F3 Charlotte, so rejectSubmission's
+ * checkHasRoleOnOrg denies with UNAUTHORIZED ("You are not authorized to
+ * edit this region", packages/api/src/router/request.ts) even though the
+ * key clears the editorProcedure gate (editor on SOME org).
  *
  * DATA ASSUMPTION: E2E_API_URL is a preview api backed by the deterministic
  * sandbox seed (packages/db/src/local-seed-lib/data.ts): regions "Boone" and
@@ -56,6 +59,7 @@ import { expect, test } from "@playwright/test";
 const API_KEYS = {
   admin: "local-slackbot-key",
   editor: "local-api-key",
+  booneEditor: "local-boone-editor-key",
   noRole: "local-map-key",
 } as const;
 
@@ -207,6 +211,52 @@ async function submitUpdateRequest(
   });
 }
 
+/**
+ * Arrange helper: submit a valid create_event request with the no-role key
+ * against a seeded region + AO. Non-editor submissions are never auto-applied,
+ * so this deterministically yields a `pending` request; returns its id.
+ */
+async function submitPendingRequest(
+  request: APIRequestContext,
+  regionName: string,
+  aoName: string,
+): Promise<string> {
+  const key = API_KEYS.noRole;
+  const regionId = await resolveOrgId(request, key, "region", regionName);
+  const aoId = await resolveOrgId(request, key, "ao", aoName);
+  const eventTypeId = await resolveBootcampTypeId(request, key);
+
+  const submitRes = await submitUpdateRequest(
+    request,
+    key,
+    createEventPayload({
+      regionId,
+      eventTypeId,
+      suffix: uniqueSuffix(),
+      aoId,
+      aoName,
+    }),
+  );
+  expect(submitRes.status()).toBe(200);
+  const submitted = (await submitRes.json()) as SubmitResponse;
+  expect(submitted.status).toBe("pending");
+  const requestId = submitted.updateRequest?.id;
+  expect(requestId).toBeTruthy();
+  return requestId!;
+}
+
+function rejectSubmission(
+  request: APIRequestContext,
+  apiKey: string,
+  requestId: string,
+) {
+  return request.post(`${API_URL}/v1/request/reject-submission`, {
+    headers: headersFor(apiKey),
+    data: { id: requestId },
+    timeout: REQUEST_TIMEOUT_MS,
+  });
+}
+
 test.describe("update-request RBAC (direct api)", () => {
   test("non-editor submit is recorded as a pending request (AC-8)", async ({
     request,
@@ -255,41 +305,22 @@ test.describe("update-request RBAC (direct api)", () => {
     expect(body.updateRequest?.status).toBe("approved");
   });
 
-  test("non-editor cannot reject; request stays pending (AC-15, adjusted — see header)", async ({
+  test("non-editor cannot reject; request stays pending (§5 reject row)", async ({
     request,
   }) => {
     // Arrange: a pending request in F3 Charlotte, submitted by the no-role key.
-    const key = API_KEYS.noRole;
-    const regionId = await resolveOrgId(request, key, "region", "F3 Charlotte");
-    const aoId = await resolveOrgId(request, key, "ao", "The Colosseum");
-    const eventTypeId = await resolveBootcampTypeId(request, key);
-
-    const submitRes = await submitUpdateRequest(
+    const requestId = await submitPendingRequest(
       request,
-      key,
-      createEventPayload({
-        regionId,
-        eventTypeId,
-        suffix: uniqueSuffix(),
-        aoId,
-        aoName: "The Colosseum",
-      }),
+      "F3 Charlotte",
+      "The Colosseum",
     );
-    expect(submitRes.status()).toBe(200);
-    const submitted = (await submitRes.json()) as SubmitResponse;
-    expect(submitted.status).toBe("pending");
-    const requestId = submitted.updateRequest?.id;
-    expect(requestId).toBeTruthy();
 
-    // Act: the same no-role key — a principal with editor on NO org, and in
-    // particular not on this request's region — attempts the reject.
-    const rejectRes = await request.post(
-      `${API_URL}/v1/request/reject-submission`,
-      {
-        headers: headersFor(API_KEYS.noRole),
-        data: { id: requestId },
-        timeout: REQUEST_TIMEOUT_MS,
-      },
+    // Act: the same no-role key — a principal with editor on NO org — is
+    // stopped at the editorProcedure gate before any per-region check.
+    const rejectRes = await rejectSubmission(
+      request,
+      API_KEYS.noRole,
+      requestId,
     );
     expect(rejectRes.status()).toBe(401);
     const rejectBody = (await rejectRes.json()) as OrpcErrorBody;
@@ -303,6 +334,71 @@ test.describe("update-request RBAC (direct api)", () => {
       API_KEYS.admin,
     );
     expect(byId.request?.status).toBe("pending");
+  });
+
+  test("editor of another region cannot reject; request stays pending (AC-15)", async ({
+    request,
+  }) => {
+    // Arrange: a pending request in F3 Charlotte (region R).
+    const requestId = await submitPendingRequest(
+      request,
+      "F3 Charlotte",
+      "The Colosseum",
+    );
+
+    // Act: the Boone-scoped editor (region S) attempts the reject. It clears
+    // the editorProcedure gate (editor on SOME org) but Boone is not an
+    // ancestor of F3 Charlotte, so rejectSubmission's checkHasRoleOnOrg
+    // denies with the region-specific UNAUTHORIZED.
+    const rejectRes = await rejectSubmission(
+      request,
+      API_KEYS.booneEditor,
+      requestId,
+    );
+    expect(rejectRes.status()).toBe(401);
+    const rejectBody = (await rejectRes.json()) as OrpcErrorBody;
+    expect(rejectBody.code).toBe("UNAUTHORIZED");
+    expect(rejectBody.message).toBe(
+      "You are not authorized to edit this region",
+    );
+
+    // Assert: the request is still pending.
+    const byId = await getJson<RequestByIdResponse>(
+      request,
+      `/v1/request/id/${requestId}`,
+      API_KEYS.admin,
+    );
+    expect(byId.request?.status).toBe("pending");
+  });
+
+  test("region-scoped editor CAN reject inside its own region (AC-15 positive control)", async ({
+    request,
+  }) => {
+    // Arrange: a pending request in Boone — the region the key is scoped to.
+    const requestId = await submitPendingRequest(
+      request,
+      "Boone",
+      "The Dark Tower",
+    );
+
+    // Act: the Boone-scoped editor rejects a Boone-region request. This
+    // proves the AC-15 denial above is region scoping, not a broken key.
+    const rejectRes = await rejectSubmission(
+      request,
+      API_KEYS.booneEditor,
+      requestId,
+    );
+    expect(rejectRes.status()).toBe(200);
+    const rejectBody = (await rejectRes.json()) as { status?: string };
+    expect(rejectBody.status).toBe("rejected");
+
+    // Assert: the request is persisted as rejected.
+    const byId = await getJson<RequestByIdResponse>(
+      request,
+      `/v1/request/id/${requestId}`,
+      API_KEYS.admin,
+    );
+    expect(byId.request?.status).toBe("rejected");
   });
 
   test("unauthenticated submit is denied (§5 row 2)", async ({ request }) => {
