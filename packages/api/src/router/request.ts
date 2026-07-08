@@ -32,7 +32,7 @@ import { notifyMapDataChange } from "../lib/webhook-events";
 import { logError, logDebug } from "../logger";
 import { notifyMapChangeRequest } from "../services/map-request-notification";
 import type { Context } from "../shared";
-import { editorProcedure, protectedProcedure } from "../shared";
+import { editorProcedure, protectedProcedure, publicProcedure } from "../shared";
 import { withPagination } from "../with-pagination";
 
 export const requestRouter = {
@@ -233,7 +233,7 @@ export const requestRouter = {
       const usePagination =
         input?.pageIndex !== undefined && input?.pageSize !== undefined;
 
-      // Determine if filter by region IDs is needed
+      // NOTE: Determine if filter by region IDs is needed
       let editableOrgs: { id: number; type: OrgType }[] = [];
       let isNationAdmin = false;
 
@@ -1016,7 +1016,7 @@ export const requestRouter = {
         };
       }
     }),
-  rejectSubmission: editorProcedure
+  rejectSubmission: publicProcedure
     .input(z.object({ id: z.string() }))
     .route({
       method: "POST",
