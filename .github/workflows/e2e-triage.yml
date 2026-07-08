@@ -139,6 +139,20 @@ jobs:
             } > "${TRIAGE_DIR}/error-context.txt"
           fi
 
+          # Fingerprint source: rich context when present; otherwise a stable
+          # core of the failure (job names + error lines). Raw log tails carry
+          # per-run noise (artifact sizes, upload logs) that made the same
+          # failure hash differently across reruns (live-trial finding,
+          # PR #55 rounds 1-3).
+          if [ -s "${TRIAGE_DIR}/test-dirs.txt" ]; then
+            cp "${TRIAGE_DIR}/error-context.txt" "${TRIAGE_DIR}/fingerprint-source.txt"
+          else
+            {
+              jq -r '.[].name' "${TRIAGE_DIR}/failed-jobs.json"
+              grep -E 'ERR_PNPM|Exit status|Error:' "${TRIAGE_DIR}/error-context.txt" || true
+            } > "${TRIAGE_DIR}/fingerprint-source.txt"
+          fi
+
           # Failing spec source: match test-results dir names back to spec
           # files (dir name is prefixed with the spec file stem).
           : > "${TRIAGE_DIR}/spec-source.txt"
@@ -168,7 +182,7 @@ jobs:
             -e 's/\b[0-9a-f]{7,40}\b/<hash>/g' \
             -e 's/\b[0-9]+(\.[0-9]+)?m?s\b/<t>/g' \
             -e 's/pr-[0-9]+-/pr-N-/g' \
-            "${TRIAGE_DIR}/error-context.txt" > "${TRIAGE_DIR}/normalized.txt"
+            "${TRIAGE_DIR}/fingerprint-source.txt" > "${TRIAGE_DIR}/normalized.txt"
           FP=$(sha256sum "${TRIAGE_DIR}/normalized.txt" | cut -c1-16)
           echo "fingerprint=${FP}" >> "$GITHUB_OUTPUT"
           echo "Error fingerprint: ${FP}"
