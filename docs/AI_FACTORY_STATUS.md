@@ -22,10 +22,42 @@
 - Single secret: `F3_AI_SDLC_CLAUDE_API_KEY` (Anthropic). The workflow has no
   write access beyond PR comments.
 
+**Live (adversarial review, F3-62 phase 1 — behind the `ai-review` label):**
+
+- `.github/workflows/adversarial-review.yml` runs on `pull_request`
+  `[labeled, synchronize]` for same-repo PRs carrying the `ai-review` label
+  (opt-in in phase 1). It collects the `origin/main...HEAD` diff (capped at
+  ~120KB with a truncation note), all `specs/*.md` when the diff touches
+  `apps/map`/`apps/admin`/`packages/api`, and existing CodeRabbit review
+  comments, then runs `pnpm -F @acme/ci-factory review`:
+  - **Reviewer A** — spec-anchored, Anthropic `claude-opus-4-8`
+    (`CI_FACTORY_REVIEW_A_*`): acceptance-criteria violations, Never-Do
+    violations, RBAC-table contradictions.
+  - **Reviewer B** — code-anchored, OpenAI `gpt-5.5` (`CI_FACTORY_REVIEW_B_*`;
+    model is workflow config, bump as flagships move): logic bugs,
+    injection/validation gaps, perf footguns. Neither reviewer sees the
+    other's output.
+  - **Judge** — cheap tier `claude-haiku-4-5` on the Anthropic credentials
+    (`CI_FACTORY_JUDGE_MODEL`): merges, dedupes (including against
+    CodeRabbit), drops style nits, ranks by severity, caps at 8, tags each
+    finding `[A]`/`[B]`/`[A+B]`. Security/availability/scalability findings
+    get `human_review_required` and **no suggested patch**.
+- Output is ONE PR comment (marker `<!-- ai-adversarial-review -->`),
+  upserted in place on synchronize; the body carries the reviewed head SHA,
+  and an already-reviewed SHA is skipped (never re-bills, never re-comments).
+- Controls: 15-minute job timeout, shared guardrails composed into all three
+  prompts, advisory/comment-only (no labels, no checks, no merges).
+- Secrets: `F3_AI_SDLC_CLAUDE_API_KEY` (reviewer A + judge) and
+  `F3_AI_SDLC_OPENAI_API_KEY` (reviewer B).
+
 **Not live yet:**
 
 - Fix PRs for `test-bug`/`flake` classifications (phase 2 of F3-61) — the
   factory currently comments only; it opens no branches or PRs.
 - The flake ledger and the fix-or-demote automation.
-- Adversarial review (F3-62) — no `ai-review` label workflow exists yet.
+- F3-62 phase 2: review on all non-draft sandbox PRs (currently label-only),
+  and inline per-line review comments (currently one summary comment with a
+  findings table).
+- A `specs/` directory — reviewer A runs spec-less until specs land at the
+  reviewed commit.
 - Precision tracking / weekly review metrics.
