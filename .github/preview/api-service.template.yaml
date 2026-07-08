@@ -54,6 +54,10 @@ spec:
               value: ${AUTH_URL}
             - name: NEXT_PUBLIC_CHANNEL
               value: branch
+            # PostHog error tracking (server-side capture reads this at
+            # runtime; empty when the secret is unset → capture no-ops).
+            - name: NEXT_PUBLIC_POSTHOG_KEY
+              value: ${NEXT_PUBLIC_POSTHOG_KEY}
           resources:
             limits:
               cpu: "1"
