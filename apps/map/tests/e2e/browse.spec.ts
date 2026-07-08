@@ -14,7 +14,7 @@ import { expect, test } from "@playwright/test";
  *
  * DATA ASSUMPTION: the target (E2E_BASE_URL) is a preview environment backed
  * by the deterministic sandbox seed (packages/db/src/local-seed-lib/data.ts):
- * Boone AOs "The Dark Tower" and "The Viaduct"; Charlotte AOs "The Foundry",
+ * Boone AOs "The Dark Tower" and "The Viaduct"; Charlotte AOs "The Phantom Foundry",
  * "The Colosseum", and "South End Station". Every seeded AO has exactly one
  * weekly Bootcamp named "<AO name> Bootcamp" on Monday at 05:30 (AM). That
  * makes the AM/PM quick filters deterministic (PM → empty, AM → everything)
@@ -76,7 +76,7 @@ test.describe("map browse & search (anonymous)", () => {
     await page.goto("/");
 
     // Selecting the F3 workout result pans/zooms and marks it selected (AC-5).
-    await searchAndSelectWorkout(page, "The Foundry");
+    await searchAndSelectWorkout(page, "The Phantom Foundry");
   });
 
   test("selected workout opens a detail panel with directions", async ({
@@ -84,7 +84,7 @@ test.describe("map browse & search (anonymous)", () => {
   }) => {
     await page.goto("/");
 
-    const selectedItem = await searchAndSelectWorkout(page, "The Foundry");
+    const selectedItem = await searchAndSelectWorkout(page, "The Phantom Foundry");
 
     // Clicking the selected item opens the location detail panel (AC-8).
     await selectedItem.click();
