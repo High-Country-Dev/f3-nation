@@ -147,6 +147,7 @@ jobs:
           docker build --platform=linux/amd64 \
             --file apps/api/Dockerfile \
             --build-arg TURBO_VERSION="${TURBO_VERSION}" \
+            --build-arg NEXT_PUBLIC_POSTHOG_KEY="${{ secrets.PREVIEW_POSTHOG_KEY }}" \
             --tag "${{ steps.meta.outputs.image_api }}" \
             .
           docker build --platform=linux/amd64 \
@@ -157,6 +158,7 @@ jobs:
           docker build --platform=linux/amd64 \
             --file apps/map/Dockerfile \
             --build-arg TURBO_VERSION="${TURBO_VERSION}" \
+            --build-arg NEXT_PUBLIC_POSTHOG_KEY="${{ secrets.PREVIEW_POSTHOG_KEY }}" \
             --tag "${{ steps.meta.outputs.image_map }}" \
             .
           docker push "${{ steps.meta.outputs.image_db }}"
