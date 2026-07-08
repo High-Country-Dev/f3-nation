@@ -109,7 +109,7 @@ jobs:
           # Artifact is only uploaded on failure and with
           # if-no-files-found: ignore, so tolerate a missing artifact.
           gh run download "${RUN_ID}" -R "${GITHUB_REPOSITORY}" \
-            --name "playwright-artifacts-pr-${PR}" \
+            --pattern "playwright-*artifacts-pr-${PR}" \
             --dir "${TRIAGE_DIR}/artifacts" \
             || echo "No playwright artifact for run ${RUN_ID}; falling back to job logs."
 
