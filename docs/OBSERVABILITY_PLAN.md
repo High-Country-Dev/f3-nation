@@ -12,7 +12,6 @@
 > @acme/logger's error bridge at PostHog, wire posthog-js with masking ON
 > and per-product spend caps at $0.
 
-
 > Scouting + planning deliverable for the AI-SDLC pilot: an OpenTelemetry
 > baseline for the pilot apps (`map`, `api`, `admin`) and a PostHog-vs-Sentry
 > free-tier evaluation. This is a **plan**, not an implementation — each phase
@@ -45,6 +44,8 @@
 - A process-global **error reporter** hook (`setErrorReporter`,
   `packages/logger/src/index.ts:37-45`) fans `logError`/`logFatal` out to
   Sentry where an app registers one (`packages/logger/src/index.ts:104-121`).
+  _(State at scout time — this sink is now **PostHog**, per the Owner
+  Decision above; rewired in PR #54.)_
 - Every app instantiates a service-named logger (`apps/map/src/lib/logging.ts`
   → `f3-map`; `packages/api/src/logger.ts` → `acme-api`; admin/auth/me have the
   same pattern).
@@ -52,6 +53,11 @@
   log↔trace correlation today (nothing to correlate with — see next section).
 
 ### Error tracking: Sentry, already live in map + api (not admin)
+
+> **Superseded — historical record.** This subsection describes what the
+> scout found. Sentry has since been **removed and replaced by PostHog**
+> (Owner Decision above; migration in PR #54). Do not read anything below
+> as "we use Sentry".
 
 - `map` and `api` have the full `@sentry/nextjs` (^10.62.0) wiring: Next
   `instrumentation.ts` with `register()` + `onRequestError`
@@ -120,8 +126,9 @@ the exact code paths we are about to instrument. See §5.
 
 ### Principle: build on what's already emitting
 
-We already have (a) structured events in Cloud Logging and (b) Sentry error
-capture in map + api. The baseline adds the missing third leg — traces and
+We already have (a) structured events in Cloud Logging and (b) error
+capture in map + api (Sentry at scout time; **now PostHog** per the Owner
+Decision, PR #54). The baseline adds the missing third leg — traces and
 metrics — with the **smallest wiring that a volunteer team can operate**, and
 upgrades the existing legs where they're misconfigured rather than replacing
 them.
@@ -132,8 +139,11 @@ them.
 
 1. Add the OTel Node SDK, initialized from the existing
    `src/instrumentation.ts` `register()` hook (nodejs runtime branch only —
-   same pattern as the current Sentry import).
-2. **Integration risk to resolve first (spike, ~half a day):**
+   same pattern the since-removed Sentry import used — now the PostHog
+   registration from PR #54).
+2. **~~Integration risk to resolve first~~ — OBSOLETE per Owner Decision:**
+   Sentry is removed, so no coexistence spike is needed; run our own
+   `NodeSDK` directly. _(Original analysis kept for the trail:)_
    `@sentry/nextjs` v10 is itself built on OpenTelemetry and installs its own
    TracerProvider. Running a second, independent `NodeSDK` conflicts. Two
    supported paths:
@@ -165,8 +175,9 @@ them.
    aggregation, nothing to flush on shutdown. Graduate to OTLP metrics only
    when we need histograms/exemplars beyond what log-based metrics give us.
 
-**`admin`:** currently dark. Add `instrumentation.ts` + Sentry (its **own**
-DSN — see the shared-DSN fix below) + the same OTel wiring, in phase 3. Admin
+**`admin`:** currently dark. Add `instrumentation.ts` + **PostHog** (per the
+Owner Decision — this originally said Sentry) + the same OTel wiring, in
+phase 3. Admin
 is internal and low-traffic; error capture matters more than traces there.
 
 **Cross-project traces:** map→api spans land in different GCP projects. For
@@ -206,17 +217,17 @@ delta-temporality push, never process-local counters read back for decisions.
 
 ### Preview environments
 
-**Traces/logs ON, Sentry OFF, alerts OFF in previews.**
+**Traces/logs ON, error tracker (now PostHog, was Sentry) OFF by default,
+alerts OFF in previews.**
 
 - Previews (sandbox project `f3-nation-dev`) are where AI-SDLC verification
   happens — traces there are cheap (volume is tiny, and Cloud Trace's free
   ingestion allotment covers it; verify current free-tier numbers) and
   directly useful for agent debugging. Logs already flow.
-- Sentry stays out of previews to avoid noise-flooding the shared (free-tier)
-  quota. Today's gating is `NODE_ENV === "production"` + `F3_CHANNEL` — since
-  previews run production builds, **verify previews aren't already reporting
-  as `development`** (`apps/map/sentry.server.config.ts:11,22-27`) and add an
-  explicit opt-out env var if they are.
+- The error tracker stays out of previews to avoid noise-flooding free-tier
+  quota. _(Written for Sentry; the principle carries to **PostHog** — PR #54
+  ships previews with server-side capture keyed but session recording off,
+  and the referenced `sentry.server.config.ts` files no longer exist.)_
 - No alerting from preview or staging projects.
 
 ---
@@ -256,7 +267,9 @@ delta-temporality push, never process-local counters read back for decisions.
 
 ### Recommendation
 
-**Keep Sentry (fix its config), defer PostHog with a defined trigger.**
+**~~Keep Sentry (fix its config), defer PostHog~~ — SUPERSEDED by the Owner
+Decision at the top of this doc: OTEL + PostHog, Sentry removed.** The
+original recommendation is preserved below for the reasoning trail only:
 
 1. **Sentry stays** as the error-tracking layer for all three pilot apps —
    including adding it to `admin`, which currently has nothing. Fix the
@@ -277,7 +290,8 @@ delta-temporality push, never process-local counters read back for decisions.
 
 ### Phase 1 — `api`: traces + error capture, proven in sandbox previews
 
-- Sentry/OTel coexistence spike (the §2 integration risk), then OTel SDK in
+- ~~Sentry/OTel coexistence spike~~ _(obsolete — Sentry removed, PR #54; no
+  coexistence needed)_, then OTel SDK in
   `apps/api/src/instrumentation.ts` with direct Cloud Trace export.
 - oRPC + HTTP + `pg` auto-instrumentation; pino trace-correlation mixin in
   `@acme/logger`.
@@ -285,7 +299,9 @@ delta-temporality push, never process-local counters read back for decisions.
   metrics in the staging/prod projects.
 - Verify end-to-end in a labeled preview env (`f3-nation-dev`): submit an
   update request in the preview, see the trace + correlated logs.
-- Sentry: split api onto its own DSN; confirm preview opt-out.
+- ~~Sentry: split api onto its own DSN~~ _(obsolete — PostHog replaced
+  Sentry, PR #54; instead confirm PostHog's preview posture: server capture
+  on, recording off)_.
 - **Effort: ~3–4 focused days** (roughly half of it the spike + IAM/exporter
   plumbing, which phases 2–3 then reuse for free).
 
@@ -298,7 +314,9 @@ delta-temporality push, never process-local counters read back for decisions.
   page-load timing), `locationWorkout` latency span (api-side, surfaced here),
   and the read-source attribute on map reads (prerequisite for the
   public-reads migration).
-- Sentry: own DSN, drop `tracesSampleRate`, fix replay masking.
+- ~~Sentry: own DSN, drop `tracesSampleRate`, fix replay masking~~ _(done
+  differently: replay masked upstream in F3-Nation#593, then Sentry removed
+  entirely for PostHog in PR #54)_.
 - **Effort: ~2–3 focused days.**
 
 ### Phase 3 — alerts (+ admin baseline)
@@ -307,10 +325,10 @@ delta-temporality push, never process-local counters read back for decisions.
   (`request.submitted` pending vs `approved`/`rejected` rate),
   `request.notification_failed` > 0, revalidate failure rate,
   `locationWorkout` latency threshold. Prod projects only.
-- Sentry alert rules per app (new-issue + regression), routed to the team's
-  Slack.
-- Bring `admin` up to baseline: `instrumentation.ts`, own Sentry DSN, OTel
-  wiring (reusing the phase 1 module).
+- Error-tracker alert rules per app (new-issue + regression) — **in
+  PostHog** (originally written for Sentry) — routed to the team's Slack.
+- Bring `admin` up to baseline: `instrumentation.ts`, **PostHog** (not
+  Sentry — Owner Decision), OTel wiring (reusing the phase 1 module).
 - Tune sampling based on observed phase 1–2 volume (see §5).
 - **Effort: ~2 focused days.**
 
@@ -333,7 +351,12 @@ blockAllMedia: false` in `apps/map/src/instrumentation-client.ts` means
    replays can capture whatever users type — including the update-request form
    (names, emails). A human should decide: mask the form fields, or disable
    replay. Do this **before** any PostHog replay conversation.
-3. **Cost exposure / quota cliffs.** Server `tracesSampleRate: 1` in Sentry
+   _(**RESOLVED**: masked upstream in F3-Nation#593; Sentry replay then
+   removed entirely in PR #54 — PostHog session recording ships off by
+   default and masked when enabled.)_
+3. **Cost exposure / quota cliffs.** _(Sentry sampling point moot since
+   PR #54 removed it; the Cloud Trace allotment caveat stands.)_ Server
+   `tracesSampleRate: 1` in Sentry
    (`apps/map/sentry.server.config.ts:17`) sends 100 % of transactions against
    a free-tier quota; Cloud Trace/Monitoring are free only up to monthly
    allotments (**verify current numbers**). A human owns the budget line and
