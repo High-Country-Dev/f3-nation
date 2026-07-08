@@ -9,6 +9,7 @@
     "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
     "lint": "eslint .",
     "lint:fix": "pnpm lint --fix",
+    "review": "tsx ./src/review-pr.ts",
     "test": "vitest run",
     "triage": "tsx ./src/triage-e2e-failure.ts",
     "typecheck": "tsc --noEmit"

@@ -1,7 +1,8 @@
-# CI factory (F3-61)
+# CI factory (F3-61 + F3-62)
 
 Versioned prompts and scripts for the F3 Nation CI factory: automated analysis
-of preview-environment failures before any auto-heal work lands in phase 2.
+of preview-environment failures (F3-61 triage) and opt-in adversarial PR
+review (F3-62) before any auto-heal work lands in phase 2.
 
 ## Layout
 
@@ -10,11 +11,18 @@ prompts/
   shared.guardrails.md           Non-negotiable rules (all phases)
   triage-phase-1.system.md       Phase-1 classifier instructions
   triage-phase-1.user.template.md  Per-run user message template
+  review-phase-1.reviewer-a.system.md  Spec-anchored reviewer (F3-62)
+  review-phase-1.reviewer-b.system.md  Code-anchored reviewer (F3-62)
+  review-phase-1.judge.system.md       Merge/dedupe/rank judge (F3-62)
+  review-phase-1.*.user.template.md    Per-run user message templates
 src/
   load-prompt.ts                 Read + compose prompts
-  triage-e2e-failure.ts          Phase-1 CLI entry point
+  triage-e2e-failure.ts          Phase-1 triage CLI entry point
+  review-pr.ts                   Phase-1 adversarial review CLI entry point
   inference.ts                   OpenAI-compatible chat completions
-  format-comment.ts              Parse model JSON → PR comment markdown
+  review-config.ts               Per-role inference config (A / B / judge)
+  format-comment.ts              Parse model JSON → triage PR comment
+  format-review.ts               Parse findings JSON → review PR comment
 ```
 
 Prompts are plain markdown — tool-agnostic, reviewable in PRs, and shared
@@ -72,6 +80,42 @@ After a Playwright job fails in `preview-env.yml`:
 
 Phase 2 (auto-heal) will add separate prompts under `prompts/` — do not extend
 the phase-1 prompt with fix instructions.
+
+## Adversarial review (F3-62 phase 1)
+
+Two independent top-tier reviewers (A: spec-anchored Anthropic, B:
+code-anchored OpenAI — neither sees the other's output) plus a cheap-tier
+judge that merges, dedupes against CodeRabbit, drops style nits, ranks by
+severity, caps at 8 findings, and tags each `[A]`/`[B]`/`[A+B]`.
+Security/availability/scalability findings are flagged for human review with
+no suggested patch. Wired into `.github/workflows/adversarial-review.yml`
+behind the `ai-review` PR label.
+
+```bash
+pnpm -F @acme/ci-factory review \
+  --diff /tmp/pr.diff \
+  --specs /tmp/specs.md \
+  --coderabbit /tmp/coderabbit.txt \
+  --head-sha "$(git rev-parse HEAD)" \
+  --output /tmp/review-comment.md
+```
+
+`--specs` and `--coderabbit` may point at empty files. Add `--dry-run` to
+print the composed prompts without calling inference.
+
+### Review inference environment
+
+| Variable                       | Role       | Notes                                  |
+| ------------------------------ | ---------- | -------------------------------------- |
+| `CI_FACTORY_REVIEW_A_API_KEY`  | reviewer A | Anthropic key (also used by the judge) |
+| `CI_FACTORY_REVIEW_A_BASE_URL` | reviewer A | e.g. `https://api.anthropic.com/v1`    |
+| `CI_FACTORY_REVIEW_A_MODEL`    | reviewer A | top tier, e.g. `claude-opus-4-8`       |
+| `CI_FACTORY_REVIEW_B_API_KEY`  | reviewer B | OpenAI key — independent provider      |
+| `CI_FACTORY_REVIEW_B_BASE_URL` | reviewer B | e.g. `https://api.openai.com/v1`       |
+| `CI_FACTORY_REVIEW_B_MODEL`    | reviewer B | top tier, e.g. `gpt-5.5`               |
+| `CI_FACTORY_JUDGE_MODEL`       | judge      | cheap tier, e.g. `claude-haiku-4-5-…`  |
+
+All are required (no defaults), matching the triage config philosophy.
 
 ## Tests
 

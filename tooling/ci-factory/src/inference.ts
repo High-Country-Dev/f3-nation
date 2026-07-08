@@ -54,10 +54,19 @@ export function buildChatCompletionBody(args: {
   config: InferenceConfig;
   systemPrompt: string;
   userPrompt: string;
+  /**
+   * Omit for current top-tier models: sampling parameters are removed on
+   * Claude Opus 4.7+ and OpenAI's gpt-5.x reasoning models — sending
+   * `temperature` there is a 400. Cheap-tier classifiers (triage on Haiku)
+   * still pass 0 for determinism.
+   */
+  temperature?: number;
 }): Record<string, unknown> {
   return {
     model: args.config.model,
-    temperature: 0,
+    ...(args.temperature !== undefined
+      ? { temperature: args.temperature }
+      : {}),
     messages: [
       { role: "system", content: args.systemPrompt },
       { role: "user", content: args.userPrompt },
@@ -76,6 +85,7 @@ export async function runChatCompletion(args: {
   config: InferenceConfig;
   systemPrompt: string;
   userPrompt: string;
+  temperature?: number;
 }): Promise<string> {
   const url = `${args.config.baseUrl.replace(/\/$/, "")}/chat/completions`;
   const response = await fetch(url, {

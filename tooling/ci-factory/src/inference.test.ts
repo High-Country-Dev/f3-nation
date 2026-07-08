@@ -72,7 +72,7 @@ describe("buildChatCompletionBody", () => {
     jsonMode: false,
   };
 
-  it("omits response_format by default", () => {
+  it("omits response_format and temperature by default", () => {
     const body = buildChatCompletionBody({
       config,
       systemPrompt: "system",
@@ -80,11 +80,25 @@ describe("buildChatCompletionBody", () => {
     });
 
     expect(body).not.toHaveProperty("response_format");
+    // Top-tier models (Claude Opus 4.7+, gpt-5.x) reject sampling params —
+    // temperature is opt-in per call, not a silent default.
+    expect(body).not.toHaveProperty("temperature");
     expect(body.model).toBe("claude-haiku-4-5-20251001");
     expect(body.messages).toEqual([
       { role: "system", content: "system" },
       { role: "user", content: "user" },
     ]);
+  });
+
+  it("includes temperature when explicitly requested", () => {
+    const body = buildChatCompletionBody({
+      config,
+      systemPrompt: "system",
+      userPrompt: "user",
+      temperature: 0,
+    });
+
+    expect(body.temperature).toBe(0);
   });
 
   it("includes response_format when JSON mode is on", () => {
