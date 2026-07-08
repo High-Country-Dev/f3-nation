@@ -62,7 +62,7 @@ export function parseTriageResult(raw: string): TriageResult {
   };
 }
 
-function extractJsonObject(raw: string): string {
+export function extractJsonObject(raw: string): string {
   const trimmed = raw.trim();
   const fenceMatch = /^```(?:json)?\s*([\s\S]*?)\s*```$/u.exec(trimmed);
   if (fenceMatch?.[1]) return fenceMatch[1].trim();

@@ -84,6 +84,9 @@ async function main(): Promise<void> {
     config: inferenceConfig,
     systemPrompt,
     userPrompt,
+    // Deterministic classification on the cheap tier (Haiku accepts it;
+    // top-tier models reject sampling params — the review CLI omits it).
+    temperature: 0,
   });
 
   const result = parseTriageResult(raw);
