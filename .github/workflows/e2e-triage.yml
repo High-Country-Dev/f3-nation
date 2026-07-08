@@ -8,7 +8,8 @@ name: E2E Triage
 #   continue-on-error, leaving the run green while the job failed).
 # - Collects the Playwright error-context.md aria snapshots + the failing
 #   spec source, fingerprints the normalized error text, and asks a cheap
-#   model (claude-haiku-4-5) for a classification in
+#   model (claude-haiku-4-5, via @acme/ci-factory's versioned prompts in
+#   tooling/ci-factory) for a classification in
 #   {app-bug, test-bug, spec-mismatch, flake, infra}.
 # - Posts ONE comment per fingerprint on the PR (marker
 #   `<!-- ai-triage:<fp> -->`); a repeat of the same failure never re-bills
@@ -191,115 +192,34 @@ jobs:
           fi
           echo "proceed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Classify failure via Anthropic API
+      # Toolchain for @acme/ci-factory (the checkout above is at head_sha, so
+      # the package, prompts, and lockfile come from the failing commit).
+      - uses: ./.github/actions/setup
+        if: steps.detect.outputs.proceed == 'true' && steps.fingerprint.outputs.proceed == 'true'
+
+      - name: Classify failure via @acme/ci-factory
         if: steps.detect.outputs.proceed == 'true' && steps.fingerprint.outputs.proceed == 'true'
         id: classify
         env:
-          ANTHROPIC_KEY: ${{ secrets.F3_AI_SDLC_CLAUDE_API_KEY }}
+          CI_FACTORY_INFERENCE_API_KEY: ${{ secrets.F3_AI_SDLC_CLAUDE_API_KEY }}
+          CI_FACTORY_INFERENCE_BASE_URL: https://api.anthropic.com/v1
+          CI_FACTORY_INFERENCE_MODEL: claude-haiku-4-5-20251001
         run: |
           # ~6KB each of error context + spec source keeps the call cheap.
           head -c 6144 "${TRIAGE_DIR}/error-context.txt" > "${TRIAGE_DIR}/err-trunc.txt"
           head -c 6144 "${TRIAGE_DIR}/spec-source.txt" > "${TRIAGE_DIR}/spec-trunc.txt"
 
-          SYSTEM_PROMPT=$(cat <<'EOF'
-          You are the phase-1 triage classifier for F3 Nation's CI factory. You will be given the error context (Playwright aria snapshot / error output) and the source of the failing e2e test(s) from a preview-environment run.
-
-          Guardrails (non-negotiable):
-          - NEVER suggest weakening, removing, or loosening an assertion, validation, or auth check to make a test pass.
-          - Findings that touch the human-owned domains — security, availability, scalability — must be FLAGGED for human review only; never propose an automated or code-level fix for them.
-          - You produce analysis for a PR comment. You have no ability to change code, and must not imply you do.
-
-          Classify the failure as exactly one of:
-          - app-bug: the application behavior is wrong; the test correctly caught it.
-          - test-bug: the test itself is incorrect (bad selector, wrong assumption, race in the test).
-          - spec-mismatch: the test encodes an expectation that no longer matches the intended/spec'd behavior.
-          - flake: nondeterministic failure (timeout, cold start, network blip) likely to pass on retry.
-          - infra: the preview environment, CI runner, or tooling failed; not the app or the test.
-
-          Respond with ONLY a single JSON object, no prose and no code fences:
-          {"classification": "<one of the five>", "confidence": "high|medium|low", "rationale": "<= 120 words", "suggested_next_step": "<= 60 words"}
-          EOF
-          )
-
-          jq -n \
-            --arg model "claude-haiku-4-5-20251001" \
-            --arg system "${SYSTEM_PROMPT}" \
-            --rawfile err "${TRIAGE_DIR}/err-trunc.txt" \
-            --rawfile spec "${TRIAGE_DIR}/spec-trunc.txt" \
-            '{
-              model: $model,
-              max_tokens: 1500,
-              system: $system,
-              messages: [{
-                role: "user",
-                content: ("## Error context (truncated)\n\n" + $err + "\n\n## Failing test source (truncated)\n\n" + $spec)
-              }]
-            }' > "${TRIAGE_DIR}/payload.json"
-
-          API_OK=true
-          curl -sS --max-time 120 --fail-with-body \
-            https://api.anthropic.com/v1/messages \
-            -H "x-api-key: ${ANTHROPIC_KEY}" \
-            -H "anthropic-version: 2023-06-01" \
-            -H "content-type: application/json" \
-            -d @"${TRIAGE_DIR}/payload.json" \
-            > "${TRIAGE_DIR}/response.json" || API_OK=false
-
-          # Defensive parse: pull the model text, extract the FIRST JSON
-          # object in it, validate the shape. Any failure -> classify_ok=false
-          # (the comment step posts a "failed to classify" note instead of
-          # crashing the workflow).
-          python3 - "$API_OK" <<'PYEOF'
-          import json, os, sys
-
-          triage_dir = os.environ["TRIAGE_DIR"]
-          ok = sys.argv[1] == "true"
-          result = None
-          if ok:
-              try:
-                  with open(f"{triage_dir}/response.json") as f:
-                      resp = json.load(f)
-                  text = "".join(
-                      b.get("text", "") for b in resp.get("content", [])
-                      if b.get("type") == "text"
-                  )
-                  decoder = json.JSONDecoder()
-                  start = text.find("{")
-                  while start != -1:
-                      try:
-                          candidate, _ = decoder.raw_decode(text[start:])
-                          if isinstance(candidate, dict):
-                              result = candidate
-                              break
-                      except json.JSONDecodeError:
-                          pass
-                      start = text.find("{", start + 1)
-              except (json.JSONDecodeError, OSError) as e:
-                  print(f"Failed to read/parse API response: {e}")
-
-          taxonomy = {"app-bug", "test-bug", "spec-mismatch", "flake", "infra"}
-          if result is not None and (
-              result.get("classification") not in taxonomy
-              or result.get("confidence") not in {"high", "medium", "low"}
-          ):
-              print(f"Model returned out-of-schema JSON: {result}")
-              result = None
-
-          if result is None:
-              print("Classification unavailable; comment will say so.")
-              with open(f"{triage_dir}/classification.json", "w") as f:
-                  json.dump({"ok": False}, f)
-          else:
-              out = {
-                  "ok": True,
-                  "classification": result["classification"],
-                  "confidence": result["confidence"],
-                  "rationale": str(result.get("rationale", ""))[:1200],
-                  "suggested_next_step": str(result.get("suggested_next_step", ""))[:600],
-              }
-              with open(f"{triage_dir}/classification.json", "w") as f:
-                  json.dump(out, f)
-          PYEOF
+          # Versioned prompts + JSON-shape validation live in the package
+          # (tooling/ci-factory). A nonzero exit (API error, out-of-schema
+          # model output, missing package at this head_sha) must not crash
+          # the workflow — the comment step posts a fallback note instead.
+          CLASSIFY_OK=true
+          pnpm -F @acme/ci-factory triage \
+            --error-context "${TRIAGE_DIR}/err-trunc.txt" \
+            --test-source "${TRIAGE_DIR}/spec-trunc.txt" \
+            --output "${TRIAGE_DIR}/triage-comment.md" \
+            || CLASSIFY_OK=false
+          echo "classify_ok=${CLASSIFY_OK}" >> "$GITHUB_OUTPUT"
 
       - name: Comment triage result on PR
         if: steps.detect.outputs.proceed == 'true' && steps.fingerprint.outputs.proceed == 'true'
@@ -308,26 +228,22 @@ jobs:
           TIER: ${{ steps.detect.outputs.tier }}
           JOB_NAMES: ${{ steps.detect.outputs.job_names }}
           FP: ${{ steps.fingerprint.outputs.fingerprint }}
+          CLASSIFY_OK: ${{ steps.classify.outputs.classify_ok }}
         run: |
-          # shellcheck disable=SC2016  # literal markdown backticks in sed
-          FAILED_TESTS=$(sort -u "${TRIAGE_DIR}/test-dirs.txt" 2>/dev/null | sed 's/^/- `/; s/$/`/')
-          [ -n "${FAILED_TESTS}" ] || FAILED_TESTS="- (no per-test artifact; see job log)"
-
-          if jq -e '.ok' "${TRIAGE_DIR}/classification.json" > /dev/null; then
-            CLASSIFICATION=$(jq -r '.classification' "${TRIAGE_DIR}/classification.json")
-            CONFIDENCE=$(jq -r '.confidence' "${TRIAGE_DIR}/classification.json")
-            RATIONALE=$(jq -r '.rationale' "${TRIAGE_DIR}/classification.json")
-            NEXT_STEP=$(jq -r '.suggested_next_step' "${TRIAGE_DIR}/classification.json")
-            VERDICT="**Classification:** \`${CLASSIFICATION}\` (confidence: ${CONFIDENCE})
-
-          **Rationale:** ${RATIONALE}
-
-          **Suggested next step:** ${NEXT_STEP}"
+          if [ "${CLASSIFY_OK}" = "true" ] && [ -s "${TRIAGE_DIR}/triage-comment.md" ]; then
+            # Marker line (dedupe key) + the package's rendered comment body.
+            {
+              echo "<!-- ai-triage:${FP} -->"
+              cat "${TRIAGE_DIR}/triage-comment.md"
+            } > "${TRIAGE_DIR}/comment.md"
           else
-            VERDICT="**Classification:** triage failed to classify this failure (API or parse error). A human should look at the run directly."
-          fi
+            # Fallback: the classifier failed (API or parse error) — post a
+            # human-readable note instead of crashing the workflow.
+            # shellcheck disable=SC2016  # literal markdown backticks in sed
+            FAILED_TESTS=$(sort -u "${TRIAGE_DIR}/test-dirs.txt" 2>/dev/null | sed 's/^/- `/; s/$/`/')
+            [ -n "${FAILED_TESTS}" ] || FAILED_TESTS="- (no per-test artifact; see job log)"
 
-          cat > "${TRIAGE_DIR}/comment.md" <<EOF
+            cat > "${TRIAGE_DIR}/comment.md" <<EOF
           <!-- ai-triage:${FP} -->
           ### 🤖 AI triage — e2e failure (${TIER} tier)
 
@@ -335,10 +251,11 @@ jobs:
           **Failed test(s):**
           ${FAILED_TESTS}
 
-          ${VERDICT}
+          **Classification:** triage failed to classify this failure (API or parse error). A human should look at the run directly.
 
           [Failing run](${RUN_URL}) · fingerprint \`${FP}\` · comment-only phase-1 triage (F3-61) — classifications are advisory; a human owns every merge decision.
           EOF
+          fi
 
           gh api "repos/${GITHUB_REPOSITORY}/issues/${PR}/comments" \
             -F "body=@${TRIAGE_DIR}/comment.md" > /dev/null
