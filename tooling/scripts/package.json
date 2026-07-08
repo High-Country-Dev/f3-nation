@@ -30,8 +30,8 @@
     "@acme/tsconfig": "workspace:*",
     "dotenv-cli": "catalog:",
     "drizzle-orm": "catalog:",
-    "postgres": "catalog:",
     "eslint": "catalog:",
+    "postgres": "catalog:",
     "prettier": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
