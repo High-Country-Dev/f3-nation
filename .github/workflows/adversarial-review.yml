@@ -17,8 +17,16 @@ name: Adversarial Review
 #   (never re-bills, never re-comments).
 # - Advisory and comment-only: no labels written, no checks failed, no merges.
 
+# SECURITY MODEL (finding from this workflow's own first review run):
+# pull_request_target runs the BASE branch's workflow file and we check out
+# the BASE (trusted) code — the ci-factory CLI, prompts, and setup action all
+# come from main. The PR is consumed strictly as DATA (diff text via the API,
+# CodeRabbit comment bodies). NEVER add a checkout of the PR head or execute
+# anything from it here — that would hand GH_TOKEN + inference secrets to
+# PR-controlled code. The ai-review label (collaborator-only) is the trigger
+# gate.
 on:
-  pull_request:
+  pull_request_target:
     types: [labeled, synchronize]
 
 permissions: {}
@@ -71,8 +79,8 @@ jobs:
         if: steps.dedupe.outputs.proceed == 'true'
         with:
           # Review the head commit; full history so origin/main...HEAD works.
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
+          # Trusted base checkout — see security model above.
+          ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
 
       - name: Collect inputs (diff, specs, CodeRabbit comments)
@@ -80,7 +88,7 @@ jobs:
         run: |
           # Diff against the merge base with main, capped at ~120KB so the
           # top-tier calls stay inside the cost envelope.
-          git diff "origin/${GITHUB_BASE_REF:-main}...HEAD" > "${REVIEW_DIR}/full.diff"
+          gh pr diff "${PR}" -R "${GITHUB_REPOSITORY}" > "${REVIEW_DIR}/full.diff"
           head -c 122880 "${REVIEW_DIR}/full.diff" > "${REVIEW_DIR}/diff.txt"
           TRUNC_NOTE=""
           if [ "$(wc -c < "${REVIEW_DIR}/full.diff")" -gt 122880 ]; then
@@ -92,7 +100,7 @@ jobs:
           # Specs feed reviewer A only when the diff touches spec-covered
           # surfaces; otherwise reviewer A runs spec-less (empty file).
           : > "${REVIEW_DIR}/specs.md"
-          if git diff --name-only "origin/${GITHUB_BASE_REF:-main}...HEAD" \
+          if gh pr diff "${PR}" -R "${GITHUB_REPOSITORY}" --name-only \
               | grep -qE '^(apps/map|apps/admin|packages/api)/'; then
             for SPEC in specs/*.md; do
               [ -e "$SPEC" ] || continue
