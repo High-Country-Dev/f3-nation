@@ -276,6 +276,27 @@ async function truncateTable(sql: Sql, table: string): Promise<void> {
   addSummary(table, "*", "truncate", n);
 }
 
+/** Truncate a set of tables in one statement — required when they hold
+ * foreign keys to each other (single-table order would fail). */
+async function truncateTables(sql: Sql, tables: string[]): Promise<void> {
+  for (const table of tables) {
+    const [row] = await sql`SELECT count(*)::int AS n FROM ${sql(table)}`;
+    addSummary(table, "*", "truncate", (row as Row).n as number);
+  }
+  if (!DRY_RUN) {
+    await sql.unsafe(
+      `TRUNCATE TABLE ${tables
+        .map((t) =>
+          t
+            .split(".")
+            .map((part) => `"${part}"`)
+            .join("."),
+        )
+        .join(", ")}`,
+    );
+  }
+}
+
 // String/nullable helpers keeping the transform bodies terse.
 const str = (v: unknown): string | null =>
   typeof v === "string" && v.length > 0 ? v : null;
@@ -284,8 +305,95 @@ const str = (v: unknown): string | null =>
 // Per-table jobs (see docs/STAGING_REFRESH.md for the full PII inventory)
 // ---------------------------------------------------------------------------
 
+/**
+ * Every base table in public+auth must be listed here (touched below) or in
+ * KEPT_TABLES (reviewed as non-PII). Any table the script doesn't know is a
+ * hard error BEFORE any writes: on 2026-07-10 the first real-data run found
+ * prod carries singular-named better-auth tables (auth.user,
+ * auth.oauth_access_token, …) alongside the plural ones the repo schema
+ * defines — 4.9k raw emails and 37k tokens would have sailed through
+ * silently. Schema drift must stop the run, not leak.
+ */
+const KEPT_TABLES = new Set([
+  "public.achievements_x_users",
+  "public.alembic_version",
+  "public.attendance_x_attendance_types",
+  "public.event_instances_x_event_types",
+  "public.event_tags_x_event_instances",
+  "public.event_tags_x_events",
+  "public.events_x_event_types",
+  "public.materializedviews",
+  "public.orgs_x_slack_spaces",
+  "public.permissions",
+  "public.positions_x_orgs_x_users",
+  "public.roles",
+  "public.roles_x_api_keys_x_org",
+  "public.roles_x_permissions",
+  "public.roles_x_users_x_org",
+  "auth.drizzle_migrations",
+]);
+
+const TOUCHED_TABLES = new Set([
+  "public.attendance_types",
+  "public.event_tags",
+  "public.event_types",
+  "public.users",
+  "public.slack_users",
+  "public.slack_spaces",
+  "public.orgs",
+  "public.locations",
+  "public.events",
+  "public.event_instances",
+  "public.update_requests",
+  "public.expansions",
+  "public.expansions_x_users",
+  "public.attendance",
+  "public.positions",
+  "public.achievements",
+  "public.auth_sessions",
+  "public.auth_verification_tokens",
+  "public.auth_accounts",
+  "public.api_keys",
+  "auth.sessions",
+  "auth.session",
+  "auth.verification_tokens",
+  "auth.verificationToken",
+  "auth.oauth_authorization_codes",
+  "auth.oauth_authorization_code",
+  "auth.oauth_access_tokens",
+  "auth.oauth_access_token",
+  "auth.oauth_refresh_tokens",
+  "auth.oauth_refresh_token",
+  "auth.email_mfa_codes",
+  "auth.email_mfa_code",
+  "auth.oauth_clients",
+  "auth.oauth_client",
+  "auth.user",
+  "auth.user_profiles",
+]);
+
+async function assertFullCoverage(sql: Sql): Promise<void> {
+  const rows = await sql<{ qualified: string }[]>`
+    SELECT table_schema || '.' || table_name AS qualified
+    FROM information_schema.tables
+    WHERE table_schema IN ('public', 'auth') AND table_type = 'BASE TABLE'`;
+  const unknown = rows
+    .map((r) => r.qualified)
+    .filter((t) => !KEPT_TABLES.has(t) && !TOUCHED_TABLES.has(t));
+  if (unknown.length > 0) {
+    throw new Error(
+      `Refusing to run: ${unknown.length} table(s) this script has never ` +
+        `classified: ${unknown.join(", ")}. Schema drift — review each for ` +
+        `PII and add it to TOUCHED_TABLES (with handling below) or ` +
+        `KEPT_TABLES before re-running.`,
+    );
+  }
+}
+
 async function obfuscate(sql: Sql): Promise<void> {
   const likeEmail = "%@%";
+
+  await assertFullCoverage(sql);
 
   // ---- users ----------------------------------------------------------------
   await transformTable(sql, {
@@ -430,25 +538,31 @@ async function obfuscate(sql: Sql): Promise<void> {
   await transformTable(sql, {
     table: "orgs",
     pk: "id",
-    columns: ["email", "phone", "description", "meta"],
+    columns: ["email", "phone", "description", "website", "meta"],
     actions: {
       email: "obfuscate (email)",
       phone: "obfuscate (phone)",
       description: "scrub emails (text)",
+      website: "scrub emails (text)",
       meta: "scrub emails (json)",
     },
     where: sql`email IS NOT NULL OR phone IS NOT NULL
-      OR description LIKE ${likeEmail} OR meta::text LIKE ${likeEmail}`,
+      OR description LIKE ${likeEmail} OR website LIKE ${likeEmail}
+      OR meta::text LIKE ${likeEmail}`,
     transform: (row) => {
       const changes: Row = {};
       const email = str(row.email);
       if (email && !isAllowlistedEmail(email)) changes.email = fakeEmail(email);
       const phone = str(row.phone);
       if (phone) changes.phone = fakePhone(phone);
-      const description = str(row.description);
-      if (description) {
-        const scrubbed = scrubText(description);
-        if (scrubbed !== description) changes.description = scrubbed;
+      // Real-data finding (2026-07-10): "website" fields carry typed-in email
+      // addresses — treat every free-form URL field as scrub-worthy text.
+      for (const col of ["description", "website"]) {
+        const v = str(row[col]);
+        if (v) {
+          const scrubbed = scrubText(v);
+          if (scrubbed !== v) changes[col] = scrubbed;
+        }
       }
       if (row.meta !== null) {
         const scrubbed = scrubJson(row.meta);
@@ -577,6 +691,7 @@ async function obfuscate(sql: Sql): Promise<void> {
       "location_contact_email",
       "event_description",
       "location_description",
+      "ao_website",
       "event_meta",
       "meta",
     ],
@@ -587,6 +702,7 @@ async function obfuscate(sql: Sql): Promise<void> {
       location_contact_email: "obfuscate (email)",
       event_description: "scrub emails (text)",
       location_description: "scrub emails (text)",
+      ao_website: "scrub emails (text)",
       event_meta: "scrub emails (json)",
       meta: "scrub emails (json)",
     },
@@ -604,7 +720,13 @@ async function obfuscate(sql: Sql): Promise<void> {
         // name-shaped fake if a value isn't email-shaped.
         changes[col] = v.includes("@") ? fakeEmail(v) : fakeName(v);
       }
-      for (const col of ["event_description", "location_description"]) {
+      for (const col of [
+        "event_description",
+        "location_description",
+        // Real-data finding (2026-07-10): users type email addresses into the
+        // AO-website field.
+        "ao_website",
+      ]) {
         const v = str(row[col]);
         if (v) {
           const scrubbed = scrubText(v);
@@ -706,7 +828,68 @@ async function obfuscate(sql: Sql): Promise<void> {
     },
   });
 
+  // ---- lookup tables with free-text descriptions ----------------------------
+  // Real-data finding (2026-07-10): regions define custom event types and put
+  // contact emails in the descriptions. Same risk shape for tags/attendance
+  // types, so all three get the text scrub.
+  for (const table of ["event_types", "event_tags", "attendance_types"]) {
+    await transformTable(sql, {
+      table,
+      pk: "id",
+      columns: ["description"],
+      actions: { description: "scrub emails (text)" },
+      where: sql`description LIKE ${likeEmail}`,
+      transform: (row) => {
+        const v = str(row.description);
+        if (!v) return null;
+        const scrubbed = scrubText(v);
+        return scrubbed === v ? null : { description: scrubbed };
+      },
+    });
+  }
+
+  // ---- auth.user (better-auth's own user table, singular) -------------------
+  // Prod carries better-auth's singular-named tables alongside the repo
+  // schema's plural ones; this one holds live emails and real names.
+  await transformTable(sql, {
+    table: "auth.user",
+    pk: "id",
+    columns: ["name", "f3_name", "hospital_name", "email", "image"],
+    actions: {
+      name: "obfuscate (name)",
+      f3_name: "obfuscate (name)",
+      hospital_name: "obfuscate (name)",
+      email: "obfuscate (email)",
+      image: "null out",
+    },
+    transform(row) {
+      const changes: Row = {};
+      for (const col of ["name", "f3_name", "hospital_name"]) {
+        const v = row[col] as string | null;
+        if (v) changes[col] = fakeName(v);
+      }
+      const email = row.email as string | null;
+      if (email) changes.email = fakeEmail(email);
+      if (row.image !== null) changes.image = null;
+      return changes;
+    },
+  });
+
+  // ---- auth.user_profiles ----------------------------------------------------
+  await transformTable(sql, {
+    table: "auth.user_profiles",
+    pk: "user_id",
+    columns: ["hospital_name"],
+    actions: { hospital_name: "obfuscate (name)" },
+    transform(row) {
+      const v = row.hospital_name as string | null;
+      return v ? { hospital_name: fakeName(v) } : null;
+    },
+  });
+
   // ---- secrets: sessions, tokens, OAuth artifacts — truncate ----------------
+  // Both naming generations: the plural tables from the repo schema and the
+  // singular better-auth ones that exist on prod.
   for (const table of [
     "auth_sessions",
     "auth_verification_tokens",
@@ -715,8 +898,52 @@ async function obfuscate(sql: Sql): Promise<void> {
     "auth.oauth_access_tokens",
     "auth.oauth_refresh_tokens",
     "auth.email_mfa_codes",
+    "auth.sessions",
+    "auth.verification_tokens",
   ]) {
     await truncateTable(sql, table);
+  }
+  // The singular family has FKs among its members (oauth_refresh_token ->
+  // oauth_access_token), so it truncates as one grouped statement.
+  await truncateTables(sql, [
+    "auth.oauth_authorization_code",
+    "auth.oauth_access_token",
+    "auth.oauth_refresh_token",
+    "auth.email_mfa_code",
+    "auth.session",
+    "auth.verificationToken",
+  ]);
+
+  // ---- auth.user.id: better-auth keys users by EMAIL ADDRESS ----------------
+  // The primary key itself is PII (real-data finding, 2026-07-10). Rewrite ids
+  // through the same memoized fakeEmail as the email columns, so id === email
+  // consistency and cross-table determinism hold. Snapshot ids first (a keyset
+  // cursor over a mutating pk would skip/revisit rows), and run after the
+  // token-table truncates so no FK rows reference the old ids.
+  {
+    const all = await sql<{ id: string }[]>`
+      SELECT id FROM ${sql("auth.user")} ORDER BY id`;
+    // fakeEmail dedups by case-NORMALIZED input, but auth.user carries
+    // case-variant duplicates of the same email as distinct rows — those get
+    // the same fake and collide on the pk. Track ids in use and lengthen the
+    // (case-sensitive) hash until unique. ORDER BY id keeps it deterministic.
+    const used = new Set(all.map((r) => r.id));
+    let n = 0;
+    for (const { id } of all) {
+      if (!id.includes("@") || isAllowlistedEmail(id)) continue;
+      let fake = fakeEmail(id);
+      for (let length = 12; used.has(fake); length += 4) {
+        fake = `user-${hashHex(id, length)}@${OBFUSCATED_EMAIL_DOMAIN}`;
+      }
+      n += 1;
+      if (!DRY_RUN) {
+        await sql`
+          UPDATE ${sql("auth.user")} SET id = ${fake} WHERE id = ${id}`;
+      }
+      used.delete(id);
+      used.add(fake);
+    }
+    addSummary("auth.user", "id", "obfuscate (email-as-id)", n);
   }
 
   // ---- api_keys: delete (cascades roles_x_api_keys_x_org) -------------------
@@ -746,6 +973,16 @@ async function obfuscate(sql: Sql): Promise<void> {
           WHERE id NOT LIKE '%-local'`
       : sql`UPDATE auth.oauth_clients
           SET client_secret_hash = encode(sha256(('revoked:' || id)::bytea), 'hex')`,
+  });
+
+  // ---- auth.oauth_client (singular, better-auth): plaintext secret ----------
+  await runSetBased(sql, {
+    table: "auth.oauth_client",
+    column: "client_secret",
+    action: "invalidate",
+    countWhere: sql`true`,
+    update: sql`UPDATE auth.oauth_client
+        SET client_secret = 'revoked-' || encode(sha256(('revoked:' || id)::bytea), 'hex')`,
   });
 }
 
