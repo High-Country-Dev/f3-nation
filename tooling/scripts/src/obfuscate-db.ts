@@ -131,15 +131,37 @@ function scrubText(value: string): string {
 }
 
 /**
- * Scrub email-shaped strings anywhere inside a JSON value. Works on the
- * serialized form: the replacement alphabet ([A-Za-z0-9.@-]) needs no JSON
- * escaping, so replace-then-parse is safe.
+ * Scrub email-shaped strings anywhere inside a JSON value by walking the
+ * parsed structure and scrubbing each string (keys included). Scrubbing the
+ * serialized form is NOT safe: an email-shaped match can begin inside a
+ * backslash escape — `"…\n@A.1."` serializes to `…\\n@A.1.`, EMAIL_REGEX
+ * reads `n@A.1` as an email and consumes the `n`, and the replacement turns
+ * the orphaned `\` into an invalid `\u…` escape (crashes JSON.parse). Found
+ * on real backblast data 2026-07-10. Returns the input reference unchanged
+ * when nothing matched so callers can cheaply detect no-ops.
  */
 function scrubJson(value: unknown): unknown {
-  const serialized = JSON.stringify(value);
-  const scrubbed = scrubText(serialized);
-  if (scrubbed === serialized) return value;
-  return JSON.parse(scrubbed) as unknown;
+  if (typeof value === "string") return scrubText(value);
+  if (Array.isArray(value)) {
+    let changed = false;
+    const next = value.map((v) => {
+      const scrubbed = scrubJson(v);
+      if (scrubbed !== v) changed = true;
+      return scrubbed;
+    });
+    return changed ? next : value;
+  }
+  if (value !== null && typeof value === "object") {
+    let changed = false;
+    const entries = Object.entries(value).map(([k, v]) => {
+      const key = scrubText(k);
+      const scrubbed = scrubJson(v);
+      if (key !== k || scrubbed !== v) changed = true;
+      return [key, scrubbed] as const;
+    });
+    return changed ? Object.fromEntries(entries) : value;
+  }
+  return value;
 }
 
 // ---------------------------------------------------------------------------
@@ -815,6 +837,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
+  console.error(error instanceof Error ? (error.stack ?? error.message) : error);
   process.exit(1);
 });
