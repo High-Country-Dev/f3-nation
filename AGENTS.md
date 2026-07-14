@@ -17,10 +17,25 @@ Deeper guidance lives in `docs/`:
   data layer, multi-instance reliability) with a pre-flight checklist.
 - [`docs/AI_AUDIT_PLAYBOOK.md`](docs/AI_AUDIT_PLAYBOOK.md) — how to run a
   repository audit and file high-quality issues.
+- [`specs/`](specs/) — feature specs: the source of truth for **what** a
+  feature does, who may do it, and how it's verified. Read the relevant spec
+  before doing feature work (the docs above cover conventions and security;
+  specs cover behavior).
 
 When adding durable guidance, put it in `AGENTS.md` (or `docs/` for deep topics
 and link it) and keep the tool pointer files thin. Per-app specifics belong in
 that app's `AGENTS.md`.
+
+### Agent skills
+
+Reusable agent skills (procedural runbooks in the
+[Agent Skills](https://agentskills.io) `SKILL.md` format) live in
+[`.agents/skills/`](.agents/skills/) — the cross-vendor convention scanned
+natively by Cursor, Codex, Gemini CLI, and others. Claude Code only scans
+`.claude/skills/`, so a `SessionStart` hook (`.claude/settings.json`) runs
+[`.claude/scripts/sync-agent-skills.mjs`](.claude/scripts/sync-agent-skills.mjs) to mirror
+`.agents/skills/` into the gitignored `.claude/skills/`. Add or edit skills in
+`.agents/skills/` only; never commit anything under `.claude/skills/`.
 
 ## Project Structure & Module Organization
 

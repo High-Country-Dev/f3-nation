@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
-    env: { NODE_ENV: "test" },
+    env: { NODE_ENV: "test", SKIP_ENV_VALIDATION: "1" },
     include: ["src/**/*.test.{ts,tsx}", "__tests__/**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",
@@ -17,10 +17,10 @@ export default defineConfig({
       exclude: coverageExclude,
       thresholds: {
         autoUpdate: true,
-        statements: 33.71,
-        branches: 35.9,
-        functions: 19.79,
-        lines: 34.47,
+        statements: 42.93,
+        branches: 42.43,
+        functions: 27.08,
+        lines: 44.36,
       },
     },
     setupFiles: ["./vitest.setup.ts"],
