@@ -25,9 +25,6 @@ const config: KnipConfig = {
     "dotenv",
     "esbuild-register",
     "tsx",
-    // Ambient Google Maps global types — referenced as `google.maps.*`
-    // throughout the codebase, not imported explicitly.
-    "@types/google.maps",
   ],
   ignoreBinaries: [
     "uv",
@@ -42,10 +39,10 @@ const config: KnipConfig = {
       entry: [
         "src/notify-outstanding-requests.ts",
         "src/script.ts",
-        // Obfuscator + verify CLIs (F3-65 staging refresh), run via
-        // package scripts, not imported.
+        // Obfuscator CLIs (F3-65 staging refresh), run via package scripts,
+        // not imported. verify.ts is reached from obfuscate-db.ts, so it
+        // needn't be listed.
         "src/obfuscate-db.ts",
-        "src/obfuscate-db.verify.ts",
         "src/obfuscate-db.verify-target.ts",
       ],
     },
