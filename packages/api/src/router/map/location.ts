@@ -110,10 +110,7 @@ export const mapLocationRouter = os.router({
         // ao_org (dangling orgId) `is_active = true` is NULL and also drops,
         // matching the "no orphaned pins" intent. (#606)
         .where(
-          and(
-            eq(schema.locations.isActive, true),
-            eq(aoOrg.isActive, true),
-          ),
+          and(eq(schema.locations.isActive, true), eq(aoOrg.isActive, true)),
         )
         .groupBy(
           schema.locations.id,
