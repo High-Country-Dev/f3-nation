@@ -357,8 +357,10 @@ describe("Map Location Router", () => {
       const session = await createAdminSession();
       await mockAuthWithSession(session);
 
+      // Fail loudly if setup doesn't hold, rather than returning early and
+      // letting the test pass without exercising the behavior. (AI review)
       const region = await createTestRegion();
-      if (!region) return;
+      if (!region) throw new Error("setup: failed to create region");
 
       // An AO deactivated by means other than the delete_ao flow, so its
       // events stay active but the AO itself is inactive.
@@ -371,11 +373,11 @@ describe("Map Location Router", () => {
           isActive: false,
         })
         .returning();
-      if (!inactiveAo) return;
+      if (!inactiveAo) throw new Error("setup: failed to create inactive AO");
       createdOrgIds.push(inactiveAo.id);
 
       const location = await createTestLocation(region.id);
-      if (!location) return;
+      if (!location) throw new Error("setup: failed to create location");
 
       // An ACTIVE event under the INACTIVE AO — must not render on the map.
       const [event] = await db
@@ -392,7 +394,8 @@ describe("Map Location Router", () => {
           isPrivate: false,
         })
         .returning();
-      if (event) createdEventIds.push(event.id);
+      if (!event) throw new Error("setup: failed to create event");
+      createdEventIds.push(event.id);
 
       const client = createTestClient();
       const result = await client.map.location.eventsAndLocations();
@@ -404,7 +407,7 @@ describe("Map Location Router", () => {
       const allEventIds = result.flatMap((loc: [number, ...unknown[]]) =>
         ((loc[6] as [number, ...unknown[]][]) ?? []).map((e) => e[0]),
       );
-      expect(allEventIds).not.toContain(event?.id);
+      expect(allEventIds).not.toContain(event.id);
     });
 
     describe("AO grouping", () => {
