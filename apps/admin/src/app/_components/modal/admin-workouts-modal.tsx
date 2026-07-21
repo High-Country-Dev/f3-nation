@@ -339,17 +339,14 @@ export default function AdminWorkoutsModal({
                                   (l) => l.regionId === regionId,
                                 );
 
-                              // If the current location's parentId is not the selected AO, then we need to update the location
+                              // Require an explicit location pick when the selected AO changes regions.
                               const locationId = form.getValues("locationId");
                               if (
                                 !regionLocations?.find(
                                   (l) => l.id === locationId,
                                 )
                               ) {
-                                form.setValue(
-                                  "locationId",
-                                  regionLocations?.[0]?.id ?? null,
-                                );
+                                form.setValue("locationId", null);
                               }
                             }}
                             defaultValue={field.value?.toString()}

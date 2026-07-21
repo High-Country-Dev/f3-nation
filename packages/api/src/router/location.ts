@@ -15,6 +15,7 @@ import {
   or,
   schema,
 } from "@acme/db";
+import { BOONE_CENTER } from "@acme/shared/app/constants";
 import { IsActiveStatus } from "@acme/shared/app/enums";
 import { arrayOrSingle, parseSorting } from "@acme/shared/app/functions";
 import { LocationInsertSchema } from "@acme/validators";
@@ -26,6 +27,20 @@ import { getSortingColumns } from "../get-sorting-columns";
 import { notifyMapDataChange } from "../lib/webhook-events";
 import { adminProcedure, editorProcedure, protectedProcedure } from "../shared";
 import { withPagination } from "../with-pagination";
+
+const BOONE_DEFAULT_COORDINATE_THRESHOLD = 0.01;
+
+const isNearBooneDefaultCenter = ({
+  latitude,
+  longitude,
+}: {
+  latitude?: number | null | undefined;
+  longitude?: number | null | undefined;
+}) =>
+  latitude != null &&
+  longitude != null &&
+  Math.abs(latitude - BOONE_CENTER[0]) <= BOONE_DEFAULT_COORDINATE_THRESHOLD &&
+  Math.abs(longitude - BOONE_CENTER[1]) <= BOONE_DEFAULT_COORDINATE_THRESHOLD;
 
 export const locationRouter = {
   all: protectedProcedure
@@ -397,6 +412,25 @@ export const locationRouter = {
           message: "You are not authorized to update this Location",
         });
       }
+
+      if (!input.id && isNearBooneDefaultCenter(input)) {
+        const [org] = await ctx.db
+          .select({ name: schema.orgs.name })
+          .from(schema.orgs)
+          .where(eq(schema.orgs.id, input.orgId));
+
+        const isIntentionalBooneLocation =
+          input.name.toLowerCase().includes("boone") ||
+          org?.name.toLowerCase().includes("boone");
+
+        if (!isIntentionalBooneLocation) {
+          throw new ORPCError("BAD_REQUEST", {
+            message:
+              "Location coordinates are too close to the default Boone map center. Please choose the actual location before saving.",
+          });
+        }
+      }
+
       const locationToCrupdate: typeof schema.locations.$inferInsert = {
         ...input,
         meta: {
