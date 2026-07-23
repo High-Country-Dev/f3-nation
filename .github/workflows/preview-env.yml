@@ -270,6 +270,33 @@ jobs:
           gcloud services api-keys update "${MAPS_KEY_NAME}" --project "${PROJECT}" \
             --allowed-referrers="${LIST}" --quiet
 
+      - name: Wait for Maps key referrer propagation
+        env:
+          MAPS_KEY: ${{ secrets.PREVIEW_GOOGLE_MAPS_API_KEY }}
+        run: |
+          # The referrer allowlist update above is not enforced instantly at
+          # Google's edge (a known propagation delay, up to a few minutes).
+          # The HTTP smoke test below only checks that the map's server-
+          # rendered HTML returns 200 — it can't see that the client-side
+          # Maps JS API load is still being rejected with
+          # RefererNotAllowedMapError while the allowlist propagates. Without
+          # this wait, e2e-blocking/e2e-advisory (needs: deploy) can start
+          # against a preview whose Map component never mounts, since the
+          # Places/Maps JS loader never resolves.
+          MAP_URL="${{ steps.meta.outputs.url_map }}"
+          for i in $(seq 1 24); do
+            BODY=$(curl -sS -H "Referer: ${MAP_URL}/" \
+              "https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places")
+            if ! echo "${BODY}" | grep -qi "RefererNotAllowedMapError"; then
+              echo "Maps key referrer allowlist propagated for ${MAP_URL} after $(((i - 1) * 5))s"
+              exit 0
+            fi
+            echo "referrer not yet propagated for ${MAP_URL} (attempt $i)"
+            sleep 5
+          done
+          echo "Maps key referrer restriction never propagated for ${MAP_URL}"
+          exit 1
+
       - name: Smoke test
         run: |
           # api liveness (root redirects to /docs)
