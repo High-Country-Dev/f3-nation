@@ -512,9 +512,6 @@ importers:
       geist:
         specifier: 'catalog:'
         version: 1.7.2(next@16.2.11(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
-      jose:
-        specifier: 'catalog:'
-        version: 6.2.3
       lodash:
         specifier: 'catalog:'
         version: 4.18.1
