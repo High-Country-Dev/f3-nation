@@ -31,7 +31,7 @@ import {
 import { toast } from "@acme/ui/toast";
 
 import { useAuth } from "~/utils/hooks/use-auth";
-import { useRuntimeConfig } from "~/utils/runtime-config";
+import { resolveAdminUrl, useRuntimeConfig } from "~/utils/runtime-config";
 import { appStore } from "~/utils/store/app";
 import { mapStore } from "~/utils/store/map";
 import { closeModal, ModalType, openModal } from "~/utils/store/modal";
@@ -43,7 +43,7 @@ export default function SettingsModal() {
   const tiles = mapStore.use.tiles();
   const { theme, setTheme } = useTheme();
   const { session, isNationAdmin, isEditorOrAdmin } = useAuth();
-  const { adminUrl: configAdminUrl, channel } = useRuntimeConfig();
+  const runtimeConfig = useRuntimeConfig();
   const center = mapStore.use.center();
   const zoom = mapStore.use.zoom();
 
@@ -282,13 +282,7 @@ export default function SettingsModal() {
                 </div>
                 {isEditorOrAdmin &&
                   (() => {
-                    const adminUrl =
-                      configAdminUrl ||
-                      (channel === "prod"
-                        ? "https://admin.f3nation.com"
-                        : channel === "staging"
-                          ? "https://staging.admin.f3nation.com"
-                          : undefined);
+                    const adminUrl = resolveAdminUrl(runtimeConfig);
                     return adminUrl ? (
                       <Link
                         href={adminUrl}

@@ -102,3 +102,18 @@ export function useRuntimeConfig(): RuntimeConfig {
 export function getGoogleApiKey(): string {
   return _runtimeConfig.googleApiKey;
 }
+
+// Falls back to the known prod/staging admin hosts when the server hasn't
+// set F3_ADMIN_URL (e.g. local dev), so the admin link still resolves there.
+export function resolveAdminUrl(
+  config: Pick<RuntimeConfigData, "adminUrl" | "channel">,
+): string | undefined {
+  return (
+    config.adminUrl ||
+    (config.channel === "prod"
+      ? "https://admin.f3nation.com"
+      : config.channel === "staging"
+        ? "https://staging.admin.f3nation.com"
+        : undefined)
+  );
+}

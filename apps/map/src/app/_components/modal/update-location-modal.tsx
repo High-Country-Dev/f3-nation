@@ -76,10 +76,6 @@ export const UpdateLocationModal = ({
       try {
         console.log("onSubmit values", values);
         setIsSubmitting(true);
-        if (values.badImage && !!values.aoLogo) {
-          form.setError("aoLogo", { message: "Invalid image URL" });
-          throw new Error("Invalid image URL");
-        }
         appStore.setState({ myEmail: values.submittedBy });
 
         const updateRequestData = {

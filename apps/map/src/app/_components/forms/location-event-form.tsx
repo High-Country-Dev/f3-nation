@@ -1,5 +1,3 @@
-import lt from "lodash/lt";
-import { X } from "lucide-react";
 import { useMemo } from "react";
 import { Controller } from "react-hook-form";
 
@@ -8,17 +6,16 @@ import { DayOfWeek } from "@acme/shared/app/enums";
 import { Case } from "@acme/shared/common/enums";
 import { convertCase, isTruthy } from "@acme/shared/common/functions";
 import { Button } from "@acme/ui/button";
+import { ImageWithFallback } from "@acme/ui/image-with-fallback";
 import { Input } from "@acme/ui/input";
 import { MultiSelect } from "@acme/ui/multi-select";
 import { ControlledSelect } from "@acme/ui/select";
 import { Textarea } from "@acme/ui/textarea";
-import { toast } from "@acme/ui/toast";
 
 import { orpc, useQuery } from "~/orpc/react";
 import { useUpdateLocationFormContext } from "~/utils/forms";
-import { uploadLogo } from "~/utils/image/upload-logo";
+import { resolveAdminUrl, useRuntimeConfig } from "~/utils/runtime-config";
 import { mapStore } from "~/utils/store/map";
-import { DebouncedImage } from "../debounced-image";
 import { CountrySelect } from "../modal/country-select";
 import { ControlledTimeInput } from "../time-input";
 import { VirtualizedCombobox } from "@acme/ui/virtualized-combobox";
@@ -32,6 +29,7 @@ export const LocationEventForm = ({
   const formRegionId = form.watch("regionId");
   const formLocationId = form.watch("locationId");
   const formAoId = form.watch("aoId");
+  const adminUrl = resolveAdminUrl(useRuntimeConfig());
   // Get form values
   const { data: regionsResponse } = useQuery(
     orpc.map.location.regions.queryOptions(),
@@ -413,68 +411,33 @@ export const LocationEventForm = ({
           <div className="text-sm font-medium text-muted-foreground">
             AO Logo
           </div>
-          <Controller
-            control={form.control}
-            name="aoLogo"
-            render={({ field: { onChange, value } }) => {
-              return (
-                <div className="grid grid-cols-[1fr_64px] items-center">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const input = e.currentTarget;
-                      if (formRegionId == null) {
-                        toast.error("Please select a region first");
-                        return;
-                      }
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-
-                      try {
-                        const url = await uploadLogo({
-                          file,
-                          orgId: formRegionId,
-                          requestId: form.getValues("id"),
-                        });
-                        onChange(url);
-                      } catch (err) {
-                        toast.error(
-                          err instanceof Error
-                            ? err.message
-                            : "Failed to upload logo",
-                        );
-                      } finally {
-                        input.value = "";
-                      }
-                    }}
-                    disabled={lt(formRegionId, 0)}
-                    className="flex-1"
-                  />
-                  {value && (
-                    <button
-                      type="button"
-                      className="relative size-16 cursor-pointer"
-                      onClick={() => onChange("")}
-                    >
-                      <DebouncedImage
-                        src={value}
-                        alt="AO Logo"
-                        onImageFail={() => form.setValue("badImage", true)}
-                        onImageSuccess={() => form.setValue("badImage", false)}
-                      />
-                      <div className="absolute -top-1 right-[-1px] flex size-5 items-center justify-center rounded-full bg-red-500 text-white">
-                        <X className="size-3" />
-                      </div>
-                    </button>
-                  )}
-                </div>
-              );
-            }}
-          />
-          <p className="text-xs text-destructive">
-            {form.formState.errors.aoLogo?.message}
-          </p>
+          <div className="flex items-center gap-3">
+            <ImageWithFallback
+              // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+              src={form.watch("aoLogo") || "/f3_logo.png"}
+              fallbackSrc="/f3_logo.png"
+              alt="AO Logo"
+              width={64}
+              height={64}
+              className="size-16 rounded-md bg-black object-contain"
+            />
+            <p className="text-xs text-muted-foreground">
+              Logo changes must be done in{" "}
+              {adminUrl ? (
+                <a
+                  href={adminUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Admin
+                </a>
+              ) : (
+                "Admin"
+              )}
+              .
+            </p>
+          </div>
         </div>
         <div className="space-y-2">
           <div className="text-sm font-medium text-muted-foreground">
