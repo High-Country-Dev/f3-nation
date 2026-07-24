@@ -12,16 +12,17 @@ import {
   schema,
   sql,
 } from "@acme/db";
+import { db } from "@acme/db/client";
 import { DayOfWeek } from "@acme/shared/app/enums";
 import { getFullAddress } from "@acme/shared/app/functions";
 import { isTruthy } from "@acme/shared/common/functions";
 import type { LowBandwidthF3Marker } from "@acme/validators";
 import { LowBandwidthF3Marker as LowBandwidthF3MarkerSchema } from "@acme/validators";
 
-import { protectedProcedure } from "../../shared";
+import { protectedProcedure, publicProcedure } from "../../shared";
 
 export const mapLocationRouter = os.router({
-  eventsAndLocations: protectedProcedure
+  eventsAndLocations: publicProcedure
     .route({
       method: "GET",
       path: "/events-and-locations",
@@ -35,10 +36,10 @@ export const mapLocationRouter = os.router({
         .array(LowBandwidthF3MarkerSchema)
         .describe("Low-bandwidth array of events and locations"),
     )
-    .handler(async ({ context: ctx }) => {
+    .handler(async () => {
       const aoOrg = aliasedTable(schema.orgs, "ao_org");
       const regionOrg = aliasedTable(schema.orgs, "region_org");
-      const locationsAndEvents = await ctx.db
+      const locationsAndEvents = await db
         .select({
           locations: {
             id: schema.locations.id,
@@ -496,7 +497,7 @@ export const mapLocationRouter = os.router({
         })),
       };
     }),
-  regionsWithLocation: protectedProcedure
+  regionsWithLocation: publicProcedure
     .route({
       method: "GET",
       path: "/regions-with-location",
@@ -519,10 +520,10 @@ export const mapLocationRouter = os.router({
         ),
       }),
     )
-    .handler(async ({ context: ctx }) => {
+    .handler(async () => {
       const ao = aliasedTable(schema.orgs, "ao");
       const region = aliasedTable(schema.orgs, "region");
-      const regionsWithLocation = await ctx.db
+      const regionsWithLocation = await db
         .select({
           id: region.id,
           name: region.name,
