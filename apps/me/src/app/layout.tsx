@@ -7,6 +7,7 @@ import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { Navbar } from "@/components/navbar";
 import { SaveProvider } from "@/lib/save-context";
 import { GoogleAnalytics } from "@/components/google-analytics";
+import { env } from "@/env";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,7 +33,7 @@ export default function RootLayout({
         <GoogleAnalytics />
         <AuthProvider>
           <SaveProvider>
-            <Navbar />
+            <Navbar channel={env.F3_CHANNEL} />
             <main className="min-h-[calc(100vh-3.5rem)]">{children}</main>
           </SaveProvider>
         </AuthProvider>
