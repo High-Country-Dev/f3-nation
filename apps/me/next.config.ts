@@ -10,8 +10,14 @@ const nextConfig: NextConfig = {
   // Turbopack's standalone trace drops the dlopen'd libvips shared library from
   // @img/sharp-libvips-*; force the complete packages into the trace. A zero-match
   // glob is a silent no-op, so the Dockerfile asserts libvips landed in standalone.
+  // CHANGELOG.md is read at runtime (fs.readFileSync in changelog/page.tsx),
+  // not statically imported, so it also needs to be forced into the trace —
+  // the automatic tracer only follows import/require graphs.
   outputFileTracingIncludes: {
-    "/*": ["../../node_modules/.pnpm/@img+sharp-libvips-*/**/*"],
+    "/*": [
+      "../../node_modules/.pnpm/@img+sharp-libvips-*/**/*",
+      "./CHANGELOG.md",
+    ],
   },
   images: {
     // Local fake-gcs emulator serves images from localhost, which Next.js 16's

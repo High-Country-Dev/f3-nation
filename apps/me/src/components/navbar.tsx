@@ -6,8 +6,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useSave } from "@/lib/save-context";
+import { VersionInfo } from "@/components/version-info";
 
-export function Navbar() {
+export function Navbar({ channel }: { channel: string }) {
   const { user, loading, signOut } = useAuth();
   const { isDirty, saving, save } = useSave();
   const [isStaging, setIsStaging] = useState(false);
@@ -38,6 +39,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
+          <VersionInfo channel={channel} />
           {isDirty && (
             <Button
               size="sm"
