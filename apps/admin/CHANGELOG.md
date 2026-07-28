@@ -1,5 +1,46 @@
 # Changelog
 
+## [2.2.0](https://github.com/High-Country-Dev/f3-nation/compare/admin@2.1.3...admin@2.2.0) (2026-07-28)
+
+
+### Features
+
+* **admin:** enhance event and AO management forms with current details display ([6ce04ea](https://github.com/High-Country-Dev/f3-nation/commit/6ce04ea6cd250fdf09f1553520af1867161bdd10))
+* **admin:** integrate vitest-config for improved coverage reporting and update dependencies ([4286e70](https://github.com/High-Country-Dev/f3-nation/commit/4286e70d91fb1035161cd6071501ab696ced3c99))
+* **api,admin:** fail approve loudly when reviewer can't edit an affected org ([e9524e9](https://github.com/High-Country-Dev/f3-nation/commit/e9524e98741779947686d8e26c505dde78d8ee43))
+* **map:** add validation to ensure event end time is after start time ([f62b213](https://github.com/High-Country-Dev/f3-nation/commit/f62b21340ac395b563ec5f44d97d3a165191da4c))
+* **map:** surface selector load errors and remove dead newEventId ([fb6084c](https://github.com/High-Country-Dev/f3-nation/commit/fb6084c746ae6173be258d192ca980d78c7f7a57))
+* **sso,me,admin:** consolidating auth code ([#579](https://github.com/High-Country-Dev/f3-nation/issues/579)) ([bfae7a9](https://github.com/High-Country-Dev/f3-nation/commit/bfae7a9ed5e9ea06516edb996dd625252659d1b1))
+* **validators:** enhance event time handling in AdminRequestsModal ([8d407de](https://github.com/High-Country-Dev/f3-nation/commit/8d407defc1e92a5b32b82c2aa1fe78bc8aa5a7b5))
+
+
+### Bug Fixes
+
+* **admin,map,api:** polish from independent review of [#274](https://github.com/High-Country-Dev/f3-nation/issues/274) fixes ([2b0e5f0](https://github.com/High-Country-Dev/f3-nation/commit/2b0e5f08bab4e2283bfd2433e70bdd743d34de7c))
+* **admin,map:** keep server logger out of the client bundle ([#274](https://github.com/High-Country-Dev/f3-nation/issues/274) CI) ([4ea5c12](https://github.com/High-Country-Dev/f3-nation/commit/4ea5c1299fde6e0ff06b582bed1d607179b6fd35))
+* **admin,map:** stop swallowing review-flow failures ([#274](https://github.com/High-Country-Dev/f3-nation/issues/274) review) ([1e799ab](https://github.com/High-Country-Dev/f3-nation/commit/1e799ab3f5be0e045ae682fc65379d1690b782a9))
+* **admin:** correct request review feedback toasts ([bea21fc](https://github.com/High-Country-Dev/f3-nation/commit/bea21fc4b519d1dc83d63a65d99653835946eb66))
+* **admin:** enhance error handling and logging for request details ([2629175](https://github.com/High-Country-Dev/f3-nation/commit/262917536a32715fff8e709e41a3a96d6e4e1a1e))
+* **admin:** realign vitest coverage thresholds to branch coverage ([#274](https://github.com/High-Country-Dev/f3-nation/issues/274) CI) ([965a272](https://github.com/High-Country-Dev/f3-nation/commit/965a2725271d304bea900eb034253f65538f1863))
+* **deps:** pin internal @acme/* refs to workspace:* to prevent release-please version drift ([#587](https://github.com/High-Country-Dev/f3-nation/issues/587)) ([21ded4b](https://github.com/High-Country-Dev/f3-nation/commit/21ded4bef25dbdd00b2e66e5d8abda516b7dd0b1))
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+* **map:** streamline form inputs and fix map update pane ([f1a09fe](https://github.com/High-Country-Dev/f3-nation/commit/f1a09fe1b3126e697e6a3299f3aa4952f12d1267))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @acme/api bumped to 0.5.0
+    * @acme/logger bumped to 0.2.0
+    * @acme/mail bumped to 0.1.3
+    * @acme/shared bumped to 0.2.0
+    * @acme/sso bumped to 0.3.0
+    * @acme/storage bumped to 0.2.3
+    * @acme/tailwind-config bumped to 0.1.4
+    * @acme/ui bumped to 0.1.4
+    * @acme/validators bumped to 0.3.0
+
 ## [2.1.3](https://github.com/F3-Nation/f3-nation/compare/admin@2.1.2...admin@2.1.3) (2026-07-26)
 
 

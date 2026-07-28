@@ -1,5 +1,53 @@
 # Changelog
 
+## [7.1.0](https://github.com/High-Country-Dev/f3-nation/compare/map@7.0.9...map@7.1.0) (2026-07-28)
+
+
+### Features
+
+* **db:** add region-scoped seed key enabling true cross-region RBAC e2e ([#59](https://github.com/High-Country-Dev/f3-nation/issues/59)) ([223fb28](https://github.com/High-Country-Dev/f3-nation/commit/223fb282fe2b4182ef78b063db0cc3fdd8801c51))
+* **map,api:** migrate error tracking from Sentry to PostHog ([#54](https://github.com/High-Country-Dev/f3-nation/issues/54)) ([9d96bae](https://github.com/High-Country-Dev/f3-nation/commit/9d96bae01d783dbdc45a96e48057ddbd1c8fd1a0))
+* **map:** add validation to ensure event end time is after start time ([f62b213](https://github.com/High-Country-Dev/f3-nation/commit/f62b21340ac395b563ec5f44d97d3a165191da4c))
+* **map:** surface selector load errors and remove dead newEventId ([fb6084c](https://github.com/High-Country-Dev/f3-nation/commit/fb6084c746ae6173be258d192ca980d78c7f7a57))
+* **playwright:** @acme/playwright-config + map blocking-tier E2E suite (F3-59) ([f76582b](https://github.com/High-Country-Dev/f3-nation/commit/f76582b282b7bb589dea4b24b511f12ec0b53705))
+* **playwright:** add @acme/playwright-config and map blocking-tier E2E suite ([9407b51](https://github.com/High-Country-Dev/f3-nation/commit/9407b51b7440bd9044929f83e658b058241d78ae))
+* **playwright:** add RBAC blocking-tier E2E matrix ([#53](https://github.com/High-Country-Dev/f3-nation/issues/53)) ([4d145ad](https://github.com/High-Country-Dev/f3-nation/commit/4d145ad1c82d3115b01216ea7e5c40d5e9291a61))
+
+
+### Bug Fixes
+
+* **admin,map,api:** polish from independent review of [#274](https://github.com/High-Country-Dev/f3-nation/issues/274) fixes ([2b0e5f0](https://github.com/High-Country-Dev/f3-nation/commit/2b0e5f08bab4e2283bfd2433e70bdd743d34de7c))
+* **admin,map:** keep server logger out of the client bundle ([#274](https://github.com/High-Country-Dev/f3-nation/issues/274) CI) ([4ea5c12](https://github.com/High-Country-Dev/f3-nation/commit/4ea5c1299fde6e0ff06b582bed1d607179b6fd35))
+* **admin,map:** stop swallowing review-flow failures ([#274](https://github.com/High-Country-Dev/f3-nation/issues/274) review) ([1e799ab](https://github.com/High-Country-Dev/f3-nation/commit/1e799ab3f5be0e045ae682fc65379d1690b782a9))
+* **admin:** enhance error handling and logging for request details ([2629175](https://github.com/High-Country-Dev/f3-nation/commit/262917536a32715fff8e709e41a3a96d6e4e1a1e))
+* **ci:** give apps/map's coverage threshold real margin ([549857c](https://github.com/High-Country-Dev/f3-nation/commit/549857ccb8d9609e0ee5b1b98a1cdc8739639919))
+* **ci:** give apps/map's coverage threshold real margin ([83f7903](https://github.com/High-Country-Dev/f3-nation/commit/83f7903fe401393544e537c6a4d1634f8f3b4985))
+* **ci:** give apps/map's coverage threshold real margin, take 2 ([39cc720](https://github.com/High-Country-Dev/f3-nation/commit/39cc7200a52b695e7fe52acc42345e0462317182))
+* **ci:** give apps/map's coverage threshold real margin, take 2 ([aaa62b7](https://github.com/High-Country-Dev/f3-nation/commit/aaa62b734c9440bbc7ffd729109578f76463d8a5))
+* **deps:** pin internal @acme/* refs to workspace:* to prevent release-please version drift ([#587](https://github.com/High-Country-Dev/f3-nation/issues/587)) ([21ded4b](https://github.com/High-Country-Dev/f3-nation/commit/21ded4bef25dbdd00b2e66e5d8abda516b7dd0b1))
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+* **map,shared:** consolidate search trigger to 3 chars, label panel close button ([#607](https://github.com/High-Country-Dev/f3-nation/issues/607)) ([f1e7751](https://github.com/High-Country-Dev/f3-nation/commit/f1e7751cb45c8edf82d3a6673d1d02d0a704409e))
+* **map:** mask session replay text and media ([#593](https://github.com/High-Country-Dev/f3-nation/issues/593)) ([a705d76](https://github.com/High-Country-Dev/f3-nation/commit/a705d767d4091566f8ed8224f968bc997694205e))
+* **map:** review-driven fixes surfaced while reinstating E2E coverage ([fb41eaa](https://github.com/High-Country-Dev/f3-nation/commit/fb41eaaf739708c5f9875d39d09c0a4a89a0e443))
+* **map:** streamline form inputs and fix map update pane ([f1a09fe](https://github.com/High-Country-Dev/f3-nation/commit/f1a09fe1b3126e697e6a3299f3aa4952f12d1267))
+* **map:** update request schema fixture ([78e5e22](https://github.com/High-Country-Dev/f3-nation/commit/78e5e22c1f31920f36af98bfd970eef45427aec1))
+* **map:** update uuid dependency and refine map contribution guidelines ([aba0ae9](https://github.com/High-Country-Dev/f3-nation/commit/aba0ae9e83d92db666de871b7311917efb2910c0))
+* **playwright:** drop nondeterministic muted-icon assertion (AC-14) ([da4a0a6](https://github.com/High-Country-Dev/f3-nation/commit/da4a0a61d8a2d846ddd30b2066820059fbf3024b))
+* **playwright:** match actual AM/PM empty-state text ([efac12d](https://github.com/High-Country-Dev/f3-nation/commit/efac12db6730e2d5dd6973586ce5c83f22b33362))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @acme/api bumped to 0.5.0
+    * @acme/auth bumped to 0.1.6
+    * @acme/logger bumped to 0.2.0
+    * @acme/shared bumped to 0.2.0
+    * @acme/tailwind-config bumped to 0.1.4
+    * @acme/ui bumped to 0.1.4
+    * @acme/validators bumped to 0.3.0
+
 ## [7.0.9](https://github.com/F3-Nation/f3-nation/compare/map@7.0.8...map@7.0.9) (2026-07-26)
 
 

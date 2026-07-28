@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.6](https://github.com/High-Country-Dev/f3-nation/compare/pkg-auth@0.1.5...pkg-auth@0.1.6) (2026-07-28)
+
+
+### Bug Fixes
+
+* **admin:** enhance error handling and logging for request details ([2629175](https://github.com/High-Country-Dev/f3-nation/commit/262917536a32715fff8e709e41a3a96d6e4e1a1e))
+* **deps:** pin internal @acme/* refs to workspace:* to prevent release-please version drift ([#587](https://github.com/High-Country-Dev/f3-nation/issues/587)) ([21ded4b](https://github.com/High-Country-Dev/f3-nation/commit/21ded4bef25dbdd00b2e66e5d8abda516b7dd0b1))
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @acme/db bumped to 0.3.0
+    * @acme/env bumped to 0.1.3
+    * @acme/logger bumped to 0.2.0
+    * @acme/shared bumped to 0.2.0
+
 ## [0.1.5](https://github.com/F3-Nation/f3-nation/compare/pkg-auth@0.1.4...pkg-auth@0.1.5) (2026-07-26)
 
 

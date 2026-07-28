@@ -1,5 +1,33 @@
 # Changelog
 
+## [6.2.0](https://github.com/High-Country-Dev/f3-nation/compare/api@6.1.3...api@6.2.0) (2026-07-28)
+
+
+### Features
+
+* **api:** adding slack messaging API routes ([#542](https://github.com/High-Country-Dev/f3-nation/issues/542)) ([951e126](https://github.com/High-Country-Dev/f3-nation/commit/951e12600a4a49d6c0cc87e30c9648a227f777f1))
+* **map,api:** migrate error tracking from Sentry to PostHog ([#54](https://github.com/High-Country-Dev/f3-nation/issues/54)) ([9d96bae](https://github.com/High-Country-Dev/f3-nation/commit/9d96bae01d783dbdc45a96e48057ddbd1c8fd1a0))
+
+
+### Bug Fixes
+
+* **ci:** warm up apps/api's characterization suite before assertions run ([8394358](https://github.com/High-Country-Dev/f3-nation/commit/83943587b73c94a0f7ec6e4e632ef3e0c204eb54))
+* **ci:** warm up apps/api's characterization suite before assertions run ([267d2d5](https://github.com/High-Country-Dev/f3-nation/commit/267d2d50d0e27a5b0df1ada622ee96b4eda4da51))
+* **deps:** pin internal @acme/* refs to workspace:* to prevent release-please version drift ([#587](https://github.com/High-Country-Dev/f3-nation/issues/587)) ([21ded4b](https://github.com/High-Country-Dev/f3-nation/commit/21ded4bef25dbdd00b2e66e5d8abda516b7dd0b1))
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+* **map:** mask session replay text and media ([#593](https://github.com/High-Country-Dev/f3-nation/issues/593)) ([a705d76](https://github.com/High-Country-Dev/f3-nation/commit/a705d767d4091566f8ed8224f968bc997694205e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @acme/api bumped to 0.5.0
+    * @acme/logger bumped to 0.2.0
+    * @acme/shared bumped to 0.2.0
+  * devDependencies
+    * @acme/db bumped to 0.3.0
+
 ## [6.1.3](https://github.com/F3-Nation/f3-nation/compare/api@6.1.2...api@6.1.3) (2026-07-26)
 
 

@@ -2,6 +2,23 @@
 
 <!-- version list -->
 
+## [2.2.0](https://github.com/High-Country-Dev/f3-nation/compare/slackbot@2.1.3...slackbot@2.2.0) (2026-07-28)
+
+
+### Features
+
+* **slackbot, api:** preblast feature refactor + some extras ([#599](https://github.com/High-Country-Dev/f3-nation/issues/599)) ([f5766df](https://github.com/High-Country-Dev/f3-nation/commit/f5766dfc3972759a3641221d8cadaca916a911b4))
+
+
+### Bug Fixes
+
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+* **slackbot,tailwind,sso:** fixing local lint issues ([#659](https://github.com/High-Country-Dev/f3-nation/issues/659)) ([030cb9b](https://github.com/High-Country-Dev/f3-nation/commit/030cb9becb28159e32f6340201dc5bf9149f0124))
+* **slackbot:** another hotfix for auto preblasts ([#722](https://github.com/High-Country-Dev/f3-nation/issues/722)) ([ee0581c](https://github.com/High-Country-Dev/f3-nation/commit/ee0581c97158102aa6a51d374b84267838423dea))
+* **slackbot:** fixed the 'no preblast text entered' bug ([#724](https://github.com/High-Country-Dev/f3-nation/issues/724)) ([1ffdce7](https://github.com/High-Country-Dev/f3-nation/commit/1ffdce7825b1e31dbc215d141eb3cbc18f82c9f5))
+* **slackbot:** preblast hotfixes ([#716](https://github.com/High-Country-Dev/f3-nation/issues/716)) ([1db0567](https://github.com/High-Country-Dev/f3-nation/commit/1db0567e0bd7811072a5a92d72b7a64cc05e426b))
+* **slackbot:** skip deactivated Slack accounts during user sync/bootstrap ([#596](https://github.com/High-Country-Dev/f3-nation/issues/596)) ([7a198f7](https://github.com/High-Country-Dev/f3-nation/commit/7a198f75149138ffd3ce301b4bb5a0d5a4952cfa))
+
 ## [2.1.3](https://github.com/F3-Nation/f3-nation/compare/slackbot@2.1.2...slackbot@2.1.3) (2026-07-27)
 
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0](https://github.com/High-Country-Dev/f3-nation/compare/homepage@1.3.0...homepage@1.4.0) (2026-07-28)
+
+
+### Features
+
+* **homepage:** adding syncbot to the admin section ([#630](https://github.com/High-Country-Dev/f3-nation/issues/630)) ([755ebb9](https://github.com/High-Country-Dev/f3-nation/commit/755ebb9429659839c3ad6e869435a638247343bc))
+
+
+### Bug Fixes
+
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @acme/tailwind-config bumped to 0.1.4
+
 ## [1.3.0](https://github.com/F3-Nation/f3-nation/compare/homepage@1.2.3...homepage@1.3.0) (2026-07-14)
 
 

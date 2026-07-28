@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.9](https://github.com/High-Country-Dev/f3-nation/compare/auth@2.0.8...auth@2.0.9) (2026-07-28)
+
+
+### Bug Fixes
+
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @acme/db bumped to 0.3.0
+    * @acme/logger bumped to 0.2.0
+    * @acme/shared bumped to 0.2.0
+  * devDependencies
+    * @acme/tailwind-config bumped to 0.1.4
+
 ## [2.0.8](https://github.com/F3-Nation/f3-nation/compare/auth@2.0.7...auth@2.0.8) (2026-07-26)
 
 
