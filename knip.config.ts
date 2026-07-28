@@ -19,13 +19,7 @@ const config: KnipConfig = {
     // vitest suite; follow-up to configure knip entries properly.
     "tooling/ci-factory/**",
   ],
-  ignoreDependencies: [
-    "@turbo/gen",
-    "dayjs",
-    "dotenv",
-    "esbuild-register",
-    "tsx",
-  ],
+  ignoreDependencies: ["@turbo/gen", "dotenv"],
   ignoreBinaries: [
     "uv",
     // Postgres CLIs the obfuscator's verify harness shells out to.
@@ -47,17 +41,6 @@ const config: KnipConfig = {
       // Wired in by resolve.alias rather than an import, so it is not
       // reachable through the module graph.
       entry: ["characterization/next-headers-shim.ts"],
-    },
-    "tooling/scripts": {
-      entry: [
-        "src/notify-outstanding-requests.ts",
-        "src/script.ts",
-        // Obfuscator CLIs (F3-65 staging refresh), run via package scripts,
-        // not imported. verify.ts is reached from obfuscate-db.ts, so it
-        // needn't be listed.
-        "src/obfuscate-db.ts",
-        "src/obfuscate-db.verify-target.ts",
-      ],
     },
   },
 };
