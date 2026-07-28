@@ -37,6 +37,10 @@ export default defineConfig({
     env: { NODE_ENV: "test" },
     include: ["characterization/**/*.char.test.ts"],
     globalSetup: ["./characterization/global-setup.ts"],
+    // Runs inside each file's own isolated worker (unlike globalSetup, which
+    // runs in a separate process and can't pre-warm a file's module
+    // registry) — see warm-up.ts for why this is needed.
+    setupFiles: ["./characterization/warm-up.ts"],
     // Vite must transform these for the aliases above to apply.
     server: { deps: { inline: ["next-auth", "@auth/core"] } },
     // No coverage block: this suite characterizes behavior, it does not chase a
