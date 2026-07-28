@@ -66,6 +66,14 @@ spec:
               value: ${API_URL}
             - name: NEXT_PUBLIC_MAP_URL
               value: ${MAP_URL}
+            # next-auth reads AUTH_URL directly from process.env (aliased
+            # from NEXTAUTH_URL) to build its own absolute callback/redirect
+            # URLs, bypassing trustHost's header-derived detection. Without
+            # it, next-auth's dev-mode credentials callback in this
+            # multi-container Cloud Run setup falls back to an internal
+            # address (0.0.0.0:8080) instead of the public preview URL.
+            - name: AUTH_URL
+              value: ${MAP_URL}
             - name: NEXT_PUBLIC_AUTH_URL
               value: ${AUTH_URL}
             - name: NEXT_PUBLIC_GOOGLE_API_KEY
