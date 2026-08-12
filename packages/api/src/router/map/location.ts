@@ -102,7 +102,16 @@ export const mapLocationRouter = os.router({
           schema.eventTypes,
           eq(schema.eventTypes.id, schema.eventsXEventTypes.eventTypeId),
         )
-        .where(eq(schema.locations.isActive, true))
+        // The event's AO org must be active: an event under a deactivated AO
+        // must not render even if the event row itself is still active
+        // (deactivation by means other than the delete_ao flow, which
+        // separately deactivates the AO's events). Filtered in WHERE rather
+        // than the leftJoin ON so the row is actually excluded — with a NULL
+        // ao_org (dangling orgId) `is_active = true` is NULL and also drops,
+        // matching the "no orphaned pins" intent. (#606)
+        .where(
+          and(eq(schema.locations.isActive, true), eq(aoOrg.isActive, true)),
+        )
         .groupBy(
           schema.locations.id,
           aoOrg.name,

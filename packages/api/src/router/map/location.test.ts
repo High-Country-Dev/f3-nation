@@ -353,6 +353,63 @@ describe("Map Location Router", () => {
       }
     });
 
+    it("should exclude events whose AO org is inactive", async () => {
+      const session = await createAdminSession();
+      await mockAuthWithSession(session);
+
+      // Fail loudly if setup doesn't hold, rather than returning early and
+      // letting the test pass without exercising the behavior. (AI review)
+      const region = await createTestRegion();
+      if (!region) throw new Error("setup: failed to create region");
+
+      // An AO deactivated by means other than the delete_ao flow, so its
+      // events stay active but the AO itself is inactive.
+      const [inactiveAo] = await db
+        .insert(schema.orgs)
+        .values({
+          name: `Inactive AO ${uniqueId()}`,
+          orgType: "ao",
+          parentId: region.id,
+          isActive: false,
+        })
+        .returning();
+      if (!inactiveAo) throw new Error("setup: failed to create inactive AO");
+      createdOrgIds.push(inactiveAo.id);
+
+      const location = await createTestLocation(region.id);
+      if (!location) throw new Error("setup: failed to create location");
+
+      // An ACTIVE event under the INACTIVE AO — must not render on the map.
+      const [event] = await db
+        .insert(schema.events)
+        .values({
+          name: `Event Under Inactive AO ${uniqueId()}`,
+          orgId: inactiveAo.id,
+          locationId: location.id,
+          dayOfWeek: "wednesday",
+          startTime: "0700",
+          isActive: true,
+          highlight: false,
+          startDate: "2026-01-01",
+          isPrivate: false,
+        })
+        .returning();
+      if (!event) throw new Error("setup: failed to create event");
+      createdEventIds.push(event.id);
+
+      const client = createTestClient();
+      const result = await client.map.location.eventsAndLocations();
+
+      // Assert across *all* returned locations: the event must not appear
+      // anywhere, even though the event itself is active — its AO is inactive.
+      // (Checking the flattened set, not one location, so the assertion still
+      // has teeth when the location drops out of the results entirely.)
+      const allEventIds = result.flatMap((loc: [number, ...unknown[]]) =>
+        ((loc[6] as [number, ...unknown[]][]) ?? []).map((e) => e[0]),
+      );
+      expect(allEventIds).not.toContain(event.id);
+    });
+
     describe("AO grouping", () => {
       it("should include per-event AO name when multiple AOs share a location", async () => {
         const session = await createAdminSession();
