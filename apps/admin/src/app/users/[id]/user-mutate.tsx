@@ -66,7 +66,7 @@ export default function UserMutate({
     orpc.user.crupdate.mutationOptions({
       onSuccess: async () => {
         await invalidateQueries("user");
-        router.push("/admin/users");
+        router.push("/users");
         toast.success("Successfully upserted user");
       },
       onError: (err) => {
@@ -308,7 +308,7 @@ export default function UserMutate({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/admin/users")}
+                  onClick={() => router.push("/users")}
                   className="w-full"
                 >
                   Cancel

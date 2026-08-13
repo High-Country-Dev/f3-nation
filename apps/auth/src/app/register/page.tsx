@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { Suspense, useState, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -156,7 +157,10 @@ function RegisterForm() {
     const safeUrl = isValidCallbackUrl(callbackUrl, window.location.origin)
       ? callbackUrl
       : "/";
-    router.push(safeUrl);
+    // Runtime-validated (isValidCallbackUrl), not statically one of this
+    // app's own routes — typedRoutes can't verify an arbitrary
+    // caller-supplied callback URL.
+    router.push(safeUrl as Route);
   }
 
   const inputClass =

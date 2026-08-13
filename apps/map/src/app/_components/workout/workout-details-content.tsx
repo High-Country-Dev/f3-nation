@@ -1,4 +1,5 @@
 import gte from "lodash/gte";
+import type { Route } from "next";
 import Link from "next/link";
 import { useCallback, useMemo } from "react";
 
@@ -360,7 +361,9 @@ export const WorkoutDetailsContent = ({
           </div>
           {event.aoWebsite && (
             <Link
-              href={event.aoWebsite}
+              // Arbitrary external website URL stored on the AO, not one of
+              // this app's own page routes.
+              href={event.aoWebsite as Route}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-blue-600 underline hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
@@ -423,7 +426,9 @@ export const WorkoutDetailsContent = ({
         </div>
         {location.regionWebsite && (
           <Link
-            href={location.regionWebsite}
+            // Arbitrary external website URL stored on the region, not one
+            // of this app's own page routes.
+            href={location.regionWebsite as Route}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-sm text-blue-600 underline hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
