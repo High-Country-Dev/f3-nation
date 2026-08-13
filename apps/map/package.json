@@ -12,6 +12,7 @@
     "lint": "dotenv -v SKIP_ENV_VALIDATION=1 eslint .",
     "start": "pnpm with-env next start",
     "typecheck": "tsc --noEmit",
+    "typegen": "dotenv -v SKIP_ENV_VALIDATION=1 next typegen",
     "test": "SKIP_ENV_VALIDATION=1 pnpm with-env vitest --run --coverage \"$@\"",
     "test:e2e": "playwright test --project=blocking",
     "test:e2e:advisory": "playwright test --project=advisory",
