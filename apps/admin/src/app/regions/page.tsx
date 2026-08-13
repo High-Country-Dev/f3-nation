@@ -4,8 +4,9 @@ import { Suspense } from "react";
 
 import Layout from "../admin-layout";
 import { AddRegionButton } from "./[id]/add-region-button";
+import { REGIONS_DEFAULT_INPUT } from "./regions-default-input";
 import { RegionsHydrator } from "./regions-hydrator";
-import { REGIONS_DEFAULT_INPUT, RegionsTable } from "./regions-table";
+import { RegionsTable } from "./regions-table";
 
 const RegionsPage = async () => {
   // In-process oRPC call (see ~/orpc/client.server.ts) using the real

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { orpc, useQuery } from "~/orpc/react";
 import type { RouterOutputs } from "~/orpc/types";
-import { REGIONS_DEFAULT_INPUT } from "./regions-table";
+import { REGIONS_DEFAULT_INPUT } from "./regions-default-input";
 
 /**
  * Seeds the regions query's React Query cache with data the server already

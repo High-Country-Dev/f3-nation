@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { orpc, useQuery } from "~/orpc/react";
 import type { RouterOutputs } from "~/orpc/types";
-import { USERS_DEFAULT_INPUT } from "./user-table";
+import { USERS_DEFAULT_INPUT } from "./users-default-input";
 
 /**
  * Seeds the users query's React Query cache with data the server already
