@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -206,7 +207,14 @@ export const AdminNavLinks = ({
             {link.label}
           </a>
         ) : (
-          <Link key={link.href} className={linkClass} href={link.href}>
+          <Link
+            key={link.href}
+            className={linkClass}
+            // link.href is typed as a plain string to also cover the
+            // external-link (isExternal) case above; this branch is only
+            // reached for the app's own internal routes.
+            href={link.href as Route}
+          >
             <Icon className="h-5 w-5" />
             {link.label}
           </Link>

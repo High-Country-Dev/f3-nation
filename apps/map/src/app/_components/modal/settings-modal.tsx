@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useTheme } from "next-themes";
+import type { Route } from "next";
 import Link from "next/link";
 import { useCallback } from "react";
 
@@ -291,7 +292,10 @@ export default function SettingsModal() {
                           : undefined);
                     return adminUrl ? (
                       <Link
-                        href={adminUrl}
+                        // External link to a separate app (admin.f3nation.com
+                        // or its staging equivalent), not one of this app's
+                        // own page routes.
+                        href={adminUrl as Route}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

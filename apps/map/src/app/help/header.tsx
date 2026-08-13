@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -14,7 +15,7 @@ export const Header = () => {
   return (
     <div className="flex items-center gap-4">
       {back ? (
-        <Link href={back} className={cn("test")}>
+        <Link href={back as Route} className={cn("test")}>
           <ArrowLeft />
         </Link>
       ) : null}

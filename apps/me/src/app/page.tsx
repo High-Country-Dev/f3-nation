@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/server";
 import { AuthCard } from "@/components/auth-card";
@@ -29,7 +30,9 @@ export default async function HomePage({ searchParams }: PageProps) {
 
   // If authenticated, redirect to profile (validated to prevent open redirect)
   if (user) {
-    redirect(safeReturnTo(params.redirect));
+    // Runtime-validated (safeReturnTo), not statically one of this app's
+    // own routes.
+    redirect(safeReturnTo(params.redirect) as Route);
   }
 
   // If not authenticated and not just logged out, initiate OAuth flow by redirecting to login
