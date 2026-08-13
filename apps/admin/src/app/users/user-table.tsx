@@ -31,6 +31,7 @@ import type { RouterOutputs } from "~/orpc/types";
 import { useDebounce } from "~/utils/hooks/use-debounce";
 import { DeleteType, ModalType, openModal } from "~/utils/store/modal";
 import { OrgFilter } from "./org-filter";
+import { USERS_DEFAULT_INPUT } from "./users-default-input";
 
 type Org = RouterOutputs["org"]["all"]["orgs"][number];
 
@@ -149,22 +150,6 @@ const UserStatusFilter = ({
       </Popover>
     </div>
   );
-};
-
-/**
- * The table's default (first-render) query input, before any filter or
- * pagination interaction. Also used server-side (page.tsx) to prefetch the
- * same data and hydrate it here (users-hydrator.tsx) — the values below
- * must stay in sync with this component's initial state so the hydrated
- * cache entry is actually reused instead of silently refetched.
- */
-export const USERS_DEFAULT_INPUT = {
-  roles: ["admin", "editor"] as UserRole[],
-  statuses: ["active"] as UserStatus[],
-  searchTerm: "",
-  pageSize: 20,
-  pageIndex: 0,
-  orgIds: [] as number[],
 };
 
 export const UserTable = () => {

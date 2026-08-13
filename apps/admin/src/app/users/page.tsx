@@ -4,7 +4,8 @@ import { Suspense } from "react";
 
 import Layout from "../admin-layout";
 import { AddUserButton } from "./[id]/add-user-button";
-import { USERS_DEFAULT_INPUT, UserTable } from "./user-table";
+import { UserTable } from "./user-table";
+import { USERS_DEFAULT_INPUT } from "./users-default-input";
 import { UsersHydrator } from "./users-hydrator";
 
 const UsersPage = async () => {

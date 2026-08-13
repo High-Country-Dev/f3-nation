@@ -22,24 +22,10 @@ import { MobileFilterSheet } from "../_components/mobile-filter-sheet";
 import { ResetFilter } from "../_components/reset-filter";
 import { StatusFilter } from "../_components/status-filter";
 import { AreaFilter } from "./area-filter";
+import { REGIONS_DEFAULT_INPUT } from "./regions-default-input";
 import { SectorFilter } from "./sector-filter";
 
 type Org = NonNullable<RouterOutputs["org"]["all"]>["orgs"][number];
-
-/**
- * The table's default (first-render) query input, before any filter or
- * pagination interaction. Also used server-side (page.tsx) to prefetch the
- * same data and hydrate it here (regions-hydrator.tsx) — the values below
- * must stay in sync with this component's initial state so the hydrated
- * cache entry is actually reused instead of silently refetched.
- */
-export const REGIONS_DEFAULT_INPUT = {
-  orgTypes: ["region"] as const,
-  pageIndex: 0,
-  pageSize: 10,
-  statuses: ["active"] as const,
-  onlyMine: true,
-};
 
 export const RegionsTable = () => {
   const { pagination, setPagination } = usePagination({
