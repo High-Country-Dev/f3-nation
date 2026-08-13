@@ -9,6 +9,7 @@ import { Toaster } from "@acme/ui/toast";
 import { TooltipProvider } from "@acme/ui/tooltip";
 
 import "~/app/globals.css";
+import "~/orpc/client.server";
 
 import { ModalSwitcher } from "~/app/_components/modal/modal-switcher";
 import { env } from "~/env";
