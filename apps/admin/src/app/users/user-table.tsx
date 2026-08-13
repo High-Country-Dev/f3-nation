@@ -151,19 +151,34 @@ const UserStatusFilter = ({
   );
 };
 
+/**
+ * The table's default (first-render) query input, before any filter or
+ * pagination interaction. Also used server-side (page.tsx) to prefetch the
+ * same data and hydrate it here (users-hydrator.tsx) — the values below
+ * must stay in sync with this component's initial state so the hydrated
+ * cache entry is actually reused instead of silently refetched.
+ */
+export const USERS_DEFAULT_INPUT = {
+  roles: ["admin", "editor"] as UserRole[],
+  statuses: ["active"] as UserStatus[],
+  searchTerm: "",
+  pageSize: 20,
+  pageIndex: 0,
+  orgIds: [] as number[],
+};
+
 export const UserTable = () => {
   const [selectedStatuses, setSelectedStatuses] = useState<UserStatus[]>([
-    "active",
+    ...USERS_DEFAULT_INPUT.statuses,
   ]);
   const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([
-    "admin",
-    "editor",
+    ...USERS_DEFAULT_INPUT.roles,
   ]);
   const [selectedOrgs, setSelectedOrgs] = useState<Org[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(USERS_DEFAULT_INPUT.searchTerm);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const { pagination, setPagination } = usePagination({
-    pageSize: 20,
+    pageSize: USERS_DEFAULT_INPUT.pageSize,
   });
 
   // Separate the role selection handler to have better control

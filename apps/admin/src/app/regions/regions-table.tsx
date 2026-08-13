@@ -26,15 +26,32 @@ import { SectorFilter } from "./sector-filter";
 
 type Org = NonNullable<RouterOutputs["org"]["all"]>["orgs"][number];
 
+/**
+ * The table's default (first-render) query input, before any filter or
+ * pagination interaction. Also used server-side (page.tsx) to prefetch the
+ * same data and hydrate it here (regions-hydrator.tsx) — the values below
+ * must stay in sync with this component's initial state so the hydrated
+ * cache entry is actually reused instead of silently refetched.
+ */
+export const REGIONS_DEFAULT_INPUT = {
+  orgTypes: ["region"] as const,
+  pageIndex: 0,
+  pageSize: 10,
+  statuses: ["active"] as const,
+  onlyMine: true,
+};
+
 export const RegionsTable = () => {
-  const { pagination, setPagination } = usePagination();
+  const { pagination, setPagination } = usePagination({
+    pageSize: REGIONS_DEFAULT_INPUT.pageSize,
+  });
   const [selectedSectors, setSelectedSectors] = useState<Org[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<Org[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<IsActiveStatus[]>([
-    "active",
+    ...REGIONS_DEFAULT_INPUT.statuses,
   ]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [onlyMine, setOnlyMine] = useState(true);
+  const [onlyMine, setOnlyMine] = useState(REGIONS_DEFAULT_INPUT.onlyMine);
 
   const { data: sectorsData } = useQuery(
     orpc.org.all.queryOptions({
@@ -76,7 +93,7 @@ export const RegionsTable = () => {
   const { data: regionsData } = useQuery(
     orpc.org.all.queryOptions({
       input: {
-        orgTypes: ["region"],
+        orgTypes: REGIONS_DEFAULT_INPUT.orgTypes,
         pageIndex: pagination.pageIndex,
         pageSize: pagination.pageSize,
         statuses: selectedStatuses,
