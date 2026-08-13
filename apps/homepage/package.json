@@ -12,7 +12,8 @@
     "format": "prettier --write . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
     "test": "vitest --run --coverage",
     "test:watch": "vitest -w",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typegen": "next typegen"
   },
   "dependencies": {
     "@acme/ui": "workspace:*",

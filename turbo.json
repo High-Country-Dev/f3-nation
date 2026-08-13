@@ -80,13 +80,17 @@
       "outputLogs": "full"
     },
     "lint": {
-      "dependsOn": ["^topo"]
+      "dependsOn": ["^topo", "typegen"]
     },
     "reset-test-db": {
       "cache": false
     },
     "typecheck": {
-      "dependsOn": ["^topo"]
+      "dependsOn": ["^topo", "typegen"]
+    },
+    "typegen": {
+      "dependsOn": ["^topo"],
+      "outputs": [".next/types/**", "next-env.d.ts"]
     },
     "test": {
       "dependsOn": ["^topo"],

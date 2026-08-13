@@ -13,6 +13,7 @@
     "test": "vitest --run --coverage",
     "test:watch": "vitest -w",
     "typecheck": "tsc --noEmit",
+    "typegen": "next typegen",
     "deploy:variables-secrets:staging": "/usr/bin/env bash scripts/cloud-run-env.sh --env staging",
     "deploy:variables-secrets:prod": "/usr/bin/env bash scripts/cloud-run-env.sh --env prod"
   },
