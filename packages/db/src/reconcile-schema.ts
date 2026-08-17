@@ -337,7 +337,14 @@ function run(cmd: string, args: string[]) {
   execFileSync(cmd, args, {
     cwd: PACKAGE_ROOT,
     stdio: "inherit",
-    shell: true,
+    // On this repo's supported dev platforms (macOS, WSL2, and CI, all
+    // POSIX) `pnpm` is a plain executable, so args are passed literally with
+    // no shell involved — no escaping concerns regardless of what
+    // PACKAGE_ROOT contains. `shell: true` is only needed on native Windows,
+    // where pnpm resolves to pnpm.cmd and Windows' CreateProcess won't apply
+    // PATHEXT resolution without a shell — but per AGENTS.md, native Windows
+    // isn't a supported dev shell in the first place.
+    shell: process.platform === "win32",
   });
 }
 
