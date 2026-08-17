@@ -15,7 +15,7 @@
     "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path ../../.prettierignore",
     "lint": "eslint .",
     "push": "pnpm with-env drizzle-kit push",
-    "pull": "pnpm with-env drizzle-kit pull",
+    "pull": "pnpm with-env tsx src/reconcile-schema.ts",
     "generate": "pnpm with-env drizzle-kit generate",
     "generate:empty": "pnpm with-env drizzle-kit generate --custom",
     "migrate": "pnpm with-env node -r esbuild-register src/migrate.ts",

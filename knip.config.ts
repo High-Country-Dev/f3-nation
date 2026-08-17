@@ -45,6 +45,11 @@ const config: KnipConfig = {
       // internal call; no static import exists for knip to trace.
       ignoreDependencies: ["@f3nation/sso"],
     },
+    "packages/db": {
+      // Only ever passed to drizzle-kit via `--config=`
+      // (src/reconcile-schema.ts), never statically imported.
+      entry: ["drizzle.introspect.config.ts"],
+    },
   },
 };
 
