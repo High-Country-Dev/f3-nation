@@ -4,8 +4,16 @@ import path from "node:path";
 
 const PACKAGE_ROOT = path.resolve(__dirname, "..");
 const INTROSPECTED_DIR = path.join(PACKAGE_ROOT, "drizzle/.introspected");
-const SCHEMA_PATH = path.join(PACKAGE_ROOT, "drizzle/schema.ts");
-const RELATIONS_PATH = path.join(PACKAGE_ROOT, "drizzle/relations.ts");
+// Static relative literals, not the absolute SCHEMA_PATH/RELATIONS_PATH
+// below — run() spawns pnpm with `shell: true` on Windows, and these two
+// get passed as CLI args to it. Checkout-path-derived absolute paths could
+// contain shell metacharacters there; these constant relative strings never
+// can, regardless of where the repo is checked out (cwd is already
+// PACKAGE_ROOT, so they still resolve correctly).
+const SCHEMA_RELATIVE = "drizzle/schema.ts";
+const RELATIONS_RELATIVE = "drizzle/relations.ts";
+const SCHEMA_PATH = path.join(PACKAGE_ROOT, SCHEMA_RELATIVE);
+const RELATIONS_PATH = path.join(PACKAGE_ROOT, RELATIONS_RELATIVE);
 
 // `drizzle-kit pull` introspects the live DB and can't reproduce these
 // hand-maintained parts of drizzle/schema.ts, so a bare pull silently
@@ -193,7 +201,11 @@ function applyJsonbAnnotations(source: string) {
     const { start, end } = findTableBlock(source, table);
     const block = source.slice(start, end);
     const columnRegex = new RegExp(
-      `(^[ \\t]*${column}: jsonb\\([^)]*\\))(,?[ \\t]*$)`,
+      // Insert right after the jsonb(...) call itself, before any chained
+      // modifiers drizzle-kit might emit (e.g. `.notNull()`), rather than
+      // requiring jsonb(...) to be the last thing on the line — otherwise a
+      // column that later becomes NOT NULL would silently stop matching.
+      `(^[ \\t]*${column}: jsonb\\([^)]*\\))((?:\\.\\w+\\([^)]*\\))*)(,?[ \\t]*$)`,
       "m",
     );
     if (!columnRegex.test(block)) {
@@ -203,7 +215,7 @@ function applyJsonbAnnotations(source: string) {
     }
     const annotatedBlock = block.replace(
       columnRegex,
-      `$1.$type<${typeName}>()$2`,
+      `$1.$type<${typeName}>()$2$3`,
     );
     source = source.slice(0, start) + annotatedBlock + source.slice(end);
   }
@@ -387,8 +399,14 @@ function main() {
   writeFileSync(RELATIONS_PATH, relations);
 
   console.log("Formatting reconciled files...");
-  run("pnpm", ["exec", "prettier", "--write", SCHEMA_PATH, RELATIONS_PATH]);
-  run("pnpm", ["exec", "eslint", "--fix", SCHEMA_PATH, RELATIONS_PATH]);
+  run("pnpm", [
+    "exec",
+    "prettier",
+    "--write",
+    SCHEMA_RELATIVE,
+    RELATIONS_RELATIVE,
+  ]);
+  run("pnpm", ["exec", "eslint", "--fix", SCHEMA_RELATIVE, RELATIONS_RELATIVE]);
 
   console.log(
     'Done. Review "git diff drizzle/schema.ts drizzle/relations.ts" — it should now show only genuine schema changes.',
