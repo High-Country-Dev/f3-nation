@@ -42,7 +42,7 @@ Reusable agent skills (procedural runbooks in the
 - Code quality: always run `pnpm lint:fix` and `pnpm format:fix` (for the whole repo — or filter to a certain app/package) to ensure your code passes all lint and formatting checks. Also run `pnpm typecheck` to validate types.
 - `pnpm lint` does **not** cover dead-code detection: CI's `lint` job runs `pnpm lint` and `pnpm lint:unused` (knip) as two separate steps, so run `pnpm lint:unused` as well before pushing.
 - `pnpm ci:local` chains the whole CI sequence (`format` → `lint` → `lint:unused` → `typecheck` → `build` → `test`) and is the closest local predictor of the CI gate.
-- Database helpers: `pnpm db:pull`, `pnpm db:push`, and `pnpm reset-test-db`.
+- Database helpers: `pnpm db:pull`, `pnpm db:push`, and `pnpm reset-test-db`. `db:pull` introspects into a throwaway directory and reapplies the hand-maintained `.$type<>()` annotations and shared `@acme/shared` enum/type imports before writing `packages/db/drizzle/schema.ts` and `relations.ts` — see `packages/db/src/reconcile-schema.ts` to add a mapping entry when introducing a new typed `jsonb()` column or shared enum wrap.
 - Every other build/dev/test command is a standard Turborepo invocation — see the root `package.json` scripts.
 
 ## Coding Style & Naming Conventions
