@@ -6,8 +6,9 @@
   "include": [
     "src",
     "drizzle.config.ts",
+    "drizzle.introspect.config.ts",
     "drizzle/relations.ts",
     "drizzle/schema.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "drizzle/.introspected"]
 }
