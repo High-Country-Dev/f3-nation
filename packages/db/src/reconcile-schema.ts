@@ -88,13 +88,18 @@ const CUSTOM_TYPES: {
 ];
 
 // drizzle-kit suffixes exported names for tables in a non-"public" Postgres
-// schema with "In<SchemaName>" (and names the schema object itself after the
-// schema, e.g. `auth`) to avoid collisions — the hand-maintained files use
-// cleaner names instead. Add entries below whenever a new table is added to
-// a non-public schema. Order doesn't matter: these are whole-identifier
-// (word-boundary) renames.
+// schema with "In<SchemaName>" to avoid collisions — the hand-maintained
+// files use cleaner names instead. Add entries below whenever a new table is
+// added to a non-public schema. Order doesn't matter: these are
+// whole-identifier (word-boundary) renames.
+//
+// The schema object itself (introspected as `export const auth =
+// pgSchema("auth")`) is NOT in this list — renameAuthSchemaObject below
+// handles it specifically, because a blind `\bauth\b` replace would also
+// rewrite the "auth" *string literal* (the real Postgres schema name)
+// passed to pgSchema(), pointing the generated code at a schema that
+// doesn't exist.
 const IDENTIFIER_RENAMES: { from: string; to: string }[] = [
-  { from: "auth", to: "authProviderSchema" },
   { from: "emailMfaCodesInAuth", to: "emailMfaCodes" },
   { from: "oauthClientsInAuth", to: "oauthClients" },
   { from: "oauthRefreshTokensInAuth", to: "oauthRefreshTokens" },
@@ -119,6 +124,24 @@ const IDENTIFIER_RENAMES: { from: string; to: string }[] = [
     to: "oauthAuthorizationCodesRelations",
   },
 ];
+
+function renameAuthSchemaObject(schema: string) {
+  // Rename only the declaration's *identifier* — the string literal schema
+  // name passed to pgSchema() must stay exactly "auth" to match the real
+  // Postgres schema.
+  const decl = "export const auth = pgSchema(";
+  if (!schema.includes(decl)) {
+    throw new Error(
+      "reconcile-schema: could not find the introspected `export const auth = pgSchema(...)` declaration to rename to `authProviderSchema`. Update renameAuthSchemaObject in src/reconcile-schema.ts, or the auth schema was renamed/dropped upstream.",
+    );
+  }
+  schema = schema.replace(decl, "export const authProviderSchema = pgSchema(");
+
+  // Rename usages (`auth.table(...)`) — matches only a standalone `auth`
+  // immediately followed by `.`, which never occurs inside the "auth"
+  // string literal above (that's followed by `)`, not `.`).
+  return schema.replace(/\bauth\./g, "authProviderSchema.");
+}
 
 function applyIdentifierRenames(schema: string, relations: string) {
   for (const { from, to } of IDENTIFIER_RENAMES) {
@@ -343,6 +366,7 @@ function main() {
   console.log("Reapplying typed json annotations and shared imports...");
   let schema = readFileSync(introspectedSchemaPath, "utf8");
   let relations = readFileSync(introspectedRelationsPath, "utf8");
+  schema = renameAuthSchemaObject(schema);
   ({ schema, relations } = applyIdentifierRenames(schema, relations));
 
   schema = applyJsonbAnnotations(schema);
