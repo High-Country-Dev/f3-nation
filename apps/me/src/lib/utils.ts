@@ -6,6 +6,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Resolves a configured base URL, falling back to `fallback` when `raw` is
+ * unset — e.g. under skipValidation (CI/lint) builds where a required env
+ * var can pass through unvalidated as undefined.
+ */
+export function resolveBaseUrl(raw: string | undefined, fallback: string): URL {
+  if (!raw) return new URL(fallback);
+  return new URL(raw);
+}
+
 /** Default fallback avatar URL */
 export function getFallbackAvatar(name?: string): string {
   const normalizedName = name?.trim();
