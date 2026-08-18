@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuth } from "@/lib/auth/server";
 import { deleteMyPosition } from "@/lib/api/client";
+import { env } from "@/env";
 import { logError } from "@/lib/logging";
 
 const deletePositionSchema = z.strictObject({
@@ -44,7 +45,7 @@ export async function DELETE(request: NextRequest) {
       "me.profile_positions.delete_failed",
       {
         sessionUserId,
-        apiBaseUrl: process.env.F3_API_BASE_URL,
+        apiBaseUrl: env.F3_API_BASE_URL,
       },
       err,
     );
