@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildHealthResponse, runChecks } from "@f3nation/health";
 import type { CheckRunnerResult } from "@f3nation/health";
+import { env } from "@/env";
 import { logError } from "@/lib/logging";
 
 const SERVICE_NAME = "f3-me";
@@ -15,7 +16,7 @@ function getServiceVersion(): string {
 }
 
 async function checkUpstreamApi(): Promise<CheckRunnerResult> {
-  const apiBaseUrl = process.env.F3_API_BASE_URL;
+  const apiBaseUrl = env.F3_API_BASE_URL;
 
   if (!apiBaseUrl) {
     return {
@@ -100,7 +101,7 @@ export async function GET() {
   } catch (err) {
     logError(
       "me.health.endpoint_failed",
-      { hasApiBaseUrl: Boolean(process.env.F3_API_BASE_URL) },
+      { hasApiBaseUrl: Boolean(env.F3_API_BASE_URL) },
       err,
     );
 

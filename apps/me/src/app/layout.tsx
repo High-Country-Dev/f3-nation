@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@acme/ui/toast";
@@ -14,13 +14,30 @@ import packageJson from "../../package.json";
 
 const inter = Inter({ subsets: ["latin"] });
 
+const meBaseUrl = (() => {
+  // NEXT_PUBLIC_SITE_URL is typed required, but under skipValidation
+  // (CI/lint builds) env.* passes through unvalidated and can be
+  // undefined — keep this fallback.
+  const raw = env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  if (!raw) return new URL("http://localhost:3003");
+  return new URL(raw);
+})();
+
 export const metadata: Metadata = {
+  metadataBase: meBaseUrl,
   title: "F3 Me — Profile Manager",
   description:
     "Manage your F3 Nation profile, avatar, emergency contacts, and more.",
   icons: {
     icon: "/favicon.ico",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
 };
 
 export default function RootLayout({

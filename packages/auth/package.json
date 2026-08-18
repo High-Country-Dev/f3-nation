@@ -24,11 +24,13 @@
     "dayjs": "catalog:",
     "drizzle-orm": "catalog:",
     "lodash": "catalog:",
-    "next": "catalog:",
     "next-auth": "catalog:",
-    "nodemailer": "catalog:",
-    "react": "catalog:",
-    "react-dom": "catalog:"
+    "nodemailer": "catalog:"
+  },
+  "peerDependencies": {
+    "next": ">=15",
+    "react": ">=18 <20",
+    "react-dom": ">=18 <20"
   },
   "devDependencies": {
     "@acme/eslint-config": "workspace:*",
@@ -37,7 +39,10 @@
     "@types/lodash": "catalog:",
     "@types/nodemailer": "catalog:",
     "eslint": "catalog:",
+    "next": "catalog:",
     "prettier": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "catalog:"
   },
   "prettier": "@acme/prettier-config"
