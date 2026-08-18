@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type * as HealthModule from "@f3nation/health";
 import {
   healthResponseSchema,
   HEALTH_CONTRACT_VERSION,
@@ -149,6 +150,32 @@ describe("Health API route", () => {
       expect(parsed.data.status).toBe("down");
       expect(parsed.data.checks[0]?.details).toMatchObject({
         reason: "missing_config",
+      });
+    }
+  });
+
+  it("returns a down response when the check runner itself throws", async () => {
+    vi.doMock("@f3nation/health", async () => {
+      const actual =
+        await vi.importActual<typeof HealthModule>("@f3nation/health");
+      return {
+        ...actual,
+        runChecks: vi.fn().mockRejectedValue(new Error("runner exploded")),
+      };
+    });
+
+    const { GET } = await import("@/app/health/route");
+    const response = await GET();
+    const data = (await response.json()) as unknown;
+
+    expect(response.status).toBe(200);
+    const parsed = healthResponseSchema.safeParse(data);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.status).toBe("down");
+      expect(parsed.data.checks[0]?.id).toBe("health-endpoint");
+      expect(parsed.data.checks[0]?.details).toMatchObject({
+        reason: "internal_error",
       });
     }
   });

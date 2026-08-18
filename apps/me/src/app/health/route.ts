@@ -3,6 +3,12 @@ import { buildHealthResponse, runChecks } from "@f3nation/health";
 import type { CheckRunnerResult } from "@f3nation/health";
 import { logError } from "@/lib/logging";
 
+// Deliberately reads process.env directly, NOT the validated `env` from
+// "@/env" — that module throws at import time if F3_API_BASE_URL is
+// missing/invalid, which would crash this route before it ever got a
+// chance to report the misconfiguration as a structured "down" response.
+// This endpoint's whole job is to survive and diagnose exactly that case.
+
 const SERVICE_NAME = "f3-me";
 const CHECK_ID = "f3-api-upstream";
 const CHECK_TIMEOUT_MS = 1_500;

@@ -6,14 +6,9 @@ import { RPCLink } from "@orpc/client/fetch";
 import type { RouterClient } from "@orpc/server";
 import type { router } from "@acme/api";
 import { Client, Header } from "@acme/shared/common/enums";
+import { env } from "@/env";
 import { ACCESS_TOKEN_COOKIE_NAME } from "@/lib/auth/constants";
 import { logError, logWarn } from "@/lib/logging";
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required environment variable: ${name}`);
-  return value;
-}
 
 function getApiTimeoutMs(): number {
   const raw = process.env.F3_API_TIMEOUT_MS;
@@ -34,7 +29,7 @@ const getApiClient = cache(async (): Promise<RouterClient<typeof router>> => {
   if (!accessToken) throw new Error("Missing access token");
 
   const link = new RPCLink({
-    url: requireEnv("F3_API_BASE_URL"),
+    url: env.F3_API_BASE_URL,
     fetch: async (input, init) => {
       const controller = new AbortController();
       const startedAt = Date.now();
@@ -62,7 +57,7 @@ const getApiClient = cache(async (): Promise<RouterClient<typeof router>> => {
 
         if (!response.ok) {
           logWarn("me.api.upstream_http_error", {
-            apiBaseUrl: process.env.F3_API_BASE_URL,
+            apiBaseUrl: env.F3_API_BASE_URL,
             endpointPath,
             status: response.status,
             statusText: response.statusText,
@@ -79,7 +74,7 @@ const getApiClient = cache(async (): Promise<RouterClient<typeof router>> => {
         logError(
           "me.api.upstream_request_failed",
           {
-            apiBaseUrl: process.env.F3_API_BASE_URL,
+            apiBaseUrl: env.F3_API_BASE_URL,
             endpointPath,
             durationMs: Date.now() - startedAt,
             aborted: controller.signal.aborted,

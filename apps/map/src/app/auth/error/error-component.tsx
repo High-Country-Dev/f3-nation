@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { VersionInfo } from "~/app/_components/version-info";
@@ -21,9 +22,9 @@ export default function ErrorComponent() {
       message: (
         <>
           <p>An error occurred while signing in. Please try again.</p>
-          <a href={"/"} className="hover:underline">
+          <Link href="/" className="hover:underline">
             Back to the map
-          </a>
+          </Link>
         </>
       ),
     },
@@ -42,9 +43,9 @@ export default function ErrorComponent() {
         <div>
           <p>You do not have permission to sign in.</p>
           <p>
-            <a href="/auth/signin" className="hover:underline">
+            <Link href="/auth/signin" className="hover:underline">
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
       ),
@@ -58,9 +59,9 @@ export default function ErrorComponent() {
         </div>
       ),
       signin: (
-        <a href="/auth/signin" className="hover:underline">
+        <Link href="/auth/signin" className="hover:underline">
           Sign in
-        </a>
+        </Link>
       ),
     },
   };

@@ -3,6 +3,7 @@ import { getMyProfile, getRegions, isNotFoundApiError } from "@/lib/api/client";
 import { ProfileForm } from "@/components/profile-form";
 import { redirect } from "next/navigation";
 import { logError, logWarn } from "@/lib/logging";
+import { env } from "@/env";
 
 export default async function ProfilePage() {
   const session = await requireAuth();
@@ -16,7 +17,7 @@ export default async function ProfilePage() {
     if (isNotFoundApiError(err)) {
       logWarn("me.profile.user_not_found", {
         sessionUserId: session.userId,
-        apiBaseUrl: process.env.F3_API_BASE_URL,
+        apiBaseUrl: env.F3_API_BASE_URL,
       });
       redirect("/?error=user_not_found");
     }
@@ -25,7 +26,7 @@ export default async function ProfilePage() {
       "me.profile.load_failed",
       {
         sessionUserId: session.userId,
-        apiBaseUrl: process.env.F3_API_BASE_URL,
+        apiBaseUrl: env.F3_API_BASE_URL,
       },
       err,
     );
@@ -39,7 +40,7 @@ export default async function ProfilePage() {
       "me.profile.regions_failed",
       {
         sessionUserId: session.userId,
-        apiBaseUrl: process.env.F3_API_BASE_URL,
+        apiBaseUrl: env.F3_API_BASE_URL,
       },
       err,
     );
