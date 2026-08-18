@@ -1,8 +1,7 @@
-import { EventTypes } from "@acme/shared/app/enums";
-
 import { and, eq } from "..";
 import { schema } from "..";
 import type { AppDb } from "../client";
+import { EventTypes } from "../enums";
 import { AOS, EVENT_TYPES } from "./data";
 
 const DAYS_OF_WEEK = [

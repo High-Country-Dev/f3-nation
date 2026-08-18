@@ -4,14 +4,11 @@ import type { ReactNode } from "react";
 import { createContext, Suspense, useContext, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 
-import {
-  CLOSE_ZOOM,
-  DEFAULT_CENTER,
-  DEFAULT_ZOOM,
-} from "@acme/shared/app/constants";
+import { DEFAULT_CENTER } from "@acme/shared/app/constants";
 import { safeParseFloat, safeParseInt } from "@acme/shared/common/functions";
 
 import { getQueryData, orpc } from "~/orpc/react";
+import { CLOSE_ZOOM, DEFAULT_ZOOM } from "~/utils/constants";
 import { mapStore } from "~/utils/store/map";
 import { setSelectedItem } from "~/utils/store/selected-item";
 

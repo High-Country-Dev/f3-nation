@@ -2,10 +2,11 @@ import type { NextFetchEvent, NextProxy, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-import { ADMIN_PATHS, routes } from "@acme/shared/app/constants";
+import { COOKIE_NAME } from "@acme/auth/constants";
+import { routes } from "@acme/shared/app/constants";
 import type { OrgRole } from "@acme/shared/app/types";
-import { COOKIE_NAME } from "@acme/shared/common/constants";
 
+import { ADMIN_PATHS } from "./paths";
 import type { MiddlewareFactory } from "./types";
 
 const withAdmin: MiddlewareFactory = (next: NextProxy) => {

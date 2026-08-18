@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { createContext, useContext, useMemo } from "react";
 
 import { DEFAULT_CENTER } from "@acme/shared/app/constants";
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
 
+import { RERENDER_LOGS } from "~/utils/constants";
 import type { SparseF3Marker } from "~/utils/types";
 import { groupMarkersByAo } from "~/utils/group-markers-by-ao";
 import { orpc, useQuery } from "~/orpc/react";

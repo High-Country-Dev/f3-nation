@@ -9,8 +9,9 @@ import {
   useRef,
 } from "react";
 
-import { isDevelopment, RERENDER_LOGS } from "@acme/shared/common/constants";
+import { isDevelopment } from "@acme/shared/common/constants";
 
+import { RERENDER_LOGS } from "~/utils/constants";
 import { setView } from "~/utils/set-view";
 import { mapStore } from "~/utils/store/map";
 

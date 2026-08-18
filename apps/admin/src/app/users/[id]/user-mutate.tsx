@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 
-import type { RoleEntry } from "@acme/shared/app/types";
 import { safeParseInt } from "@acme/shared/common/functions";
 import { Button } from "@acme/ui/button";
 import {
@@ -36,6 +35,7 @@ import {
   useMutation,
   useQuery,
 } from "~/orpc/react";
+import type { RoleEntry } from "~/lib/types";
 
 export default function UserMutate({
   user,

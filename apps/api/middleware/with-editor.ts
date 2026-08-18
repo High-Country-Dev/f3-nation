@@ -2,9 +2,10 @@ import type { NextFetchEvent, NextProxy, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-import { EDITOR_PATHS, routes } from "@acme/shared/app/constants";
+import { routes } from "@acme/shared/app/constants";
 import type { OrgRole } from "@acme/shared/app/types";
 
+import { EDITOR_PATHS } from "./paths";
 import type { MiddlewareFactory } from "./types";
 import { env } from "~/env";
 

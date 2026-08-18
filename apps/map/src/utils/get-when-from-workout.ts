@@ -1,11 +1,12 @@
 import dayjs from "dayjs";
 
 import type { DayOfWeek } from "@acme/shared/app/enums";
+import { getReadableDayOfWeek } from "@acme/shared/app/functions";
+
 import {
   START_END_TIME_DB_FORMAT,
   START_END_TIME_DISPLAY_FORMAT,
-} from "@acme/shared/app/constants";
-import { getReadableDayOfWeek } from "@acme/shared/app/functions";
+} from "./constants";
 
 export const getWhenFromWorkout = (params: {
   startTime: string | null;

@@ -1,21 +1,7 @@
 import type { RegionRole } from "@acme/shared/app/enums";
-import {
-  TEST_ADMIN_ROLE_ID,
-  TEST_ADMIN_USER_ID,
-  TEST_AO_1_ORG_ID,
-  TEST_AO_2_ORG_ID,
-  TEST_AREA_ORG_ID,
-  TEST_EDITOR_ROLE_ID,
-  TEST_EDITOR_USER_ID,
-  TEST_NATION_ORG_ID,
-  TEST_REGION_1_ORG_ID,
-  TEST_REGION_2_ORG_ID,
-  TEST_REGION_3_ORG_ID,
-  TEST_SECTOR_ORG_ID,
-} from "@acme/shared/app/constants";
-import { EventTypes } from "@acme/shared/app/enums";
 
 import type { AppDb } from "./client";
+import { EventTypes } from "./enums";
 import { sql } from ".";
 import {
   eventTypes,
@@ -25,6 +11,19 @@ import {
   users,
 } from "../drizzle/schema";
 import { getDb } from "./utils/functions";
+
+export const TEST_NATION_ORG_ID = 1;
+export const TEST_REGION_1_ORG_ID = 2;
+export const TEST_REGION_2_ORG_ID = 3;
+export const TEST_REGION_3_ORG_ID = 4;
+export const TEST_SECTOR_ORG_ID = 5;
+export const TEST_AREA_ORG_ID = 6;
+export const TEST_AO_1_ORG_ID = 7;
+export const TEST_AO_2_ORG_ID = 8;
+export const TEST_EDITOR_USER_ID = 1;
+export const TEST_ADMIN_USER_ID = 2;
+export const TEST_EDITOR_ROLE_ID = 1;
+export const TEST_ADMIN_ROLE_ID = 2;
 
 export const testSeed = async (db?: AppDb) => {
   const _db = db ?? getDb();

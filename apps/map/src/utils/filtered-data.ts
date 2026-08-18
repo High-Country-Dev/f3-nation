@@ -1,7 +1,7 @@
 // filteredData.ts
 
 import type { DayOfWeek } from "@acme/shared/app/enums";
-import { START_END_TIME_DB_FORMAT } from "@acme/shared/app/constants";
+import { START_END_TIME_DB_FORMAT } from "~/utils/constants";
 import { isTruthy } from "@acme/shared/common/functions";
 
 import type { FiltersType } from "./store/filter";

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { z } from "zod";
 
-import { EVENT_CATEGORY_OPTIONS, Z_INDEX } from "@acme/shared/app/constants";
+import { Z_INDEX } from "@acme/shared/app/constants";
 import { safeParseInt } from "@acme/shared/common/functions";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
@@ -32,6 +32,7 @@ import { toast } from "@acme/ui/toast";
 import { EventTypeInsertSchema } from "@acme/validators";
 
 import gte from "lodash/gte";
+import { EVENT_CATEGORY_OPTIONS } from "~/lib/constants";
 import {
   invalidateQueries,
   orpc,

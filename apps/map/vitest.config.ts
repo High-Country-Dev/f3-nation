@@ -18,10 +18,13 @@ export default defineConfig({
       exclude: coverageExclude,
       thresholds: {
         autoUpdate: true,
-        statements: 12.79,
-        branches: 4.8,
-        functions: 8.74,
-        lines: 13.06,
+        // A small margin below the locally-measured values above guards against
+        // Windows (local) vs Linux (CI) v8 coverage instrumentation producing
+        // slightly different percentages for identical code — see PR #86 CI failure.
+        statements: 19.1,
+        branches: 16.3,
+        functions: 13.3,
+        lines: 19.6,
       },
     },
     exclude: [
