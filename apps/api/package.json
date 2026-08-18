@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@acme/api": "workspace:*",
+    "@acme/auth": "workspace:*",
     "@acme/logger": "workspace:*",
     "@acme/shared": "workspace:*",
     "@f3nation/health": "workspace:*",

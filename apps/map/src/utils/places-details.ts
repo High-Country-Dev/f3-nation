@@ -1,6 +1,5 @@
-import type { PlaceDetails } from "@acme/shared/app/types";
-
 import { getGoogleApiKey } from "./runtime-config";
+import type { PlaceDetails } from "./types";
 
 // Cache for place details (placeId -> details)
 const placeDetailsCache = new Map<

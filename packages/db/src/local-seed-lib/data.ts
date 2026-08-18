@@ -1,4 +1,4 @@
-import { EventTypes } from "@acme/shared/app/enums";
+import { EventTypes } from "../enums";
 
 // ---------------------------------------------------------------------------
 // Org hierarchy

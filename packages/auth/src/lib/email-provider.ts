@@ -5,8 +5,9 @@ import { createTransport } from "nodemailer";
 import Email from "next-auth/providers/nodemailer";
 
 import { env } from "@acme/env";
-import { ProviderId } from "@acme/shared/common/enums";
 import { normalizeEmail } from "@acme/shared/common/functions";
+
+import { ProviderId } from "../enums";
 
 const SHOW_MOBILE = false;
 

@@ -1,5 +1,7 @@
-import { DEFAULT_CENTER, DEFAULT_ZOOM } from "@acme/shared/app/constants";
+import { DEFAULT_CENTER } from "@acme/shared/app/constants";
 import { ZustandStore } from "@acme/shared/common/classes";
+
+import { DEFAULT_ZOOM } from "~/utils/constants";
 
 type NearbyLocationCenterType =
   "self" | "search" | "manual-update" | "default" | "click" | "random";

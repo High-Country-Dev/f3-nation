@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
+import { RERENDER_LOGS } from "~/utils/constants";
 
 import { MapPageWrapper } from "~/app/_components/map-page-wrapper";
 import { FilteredMapResultsProvider } from "~/app/_components/map/filtered-map-results-provider";

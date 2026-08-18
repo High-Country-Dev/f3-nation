@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useMap } from "@vis.gl/react-google-maps";
 import debounce from "lodash/debounce";
 
-import { CLOSE_ZOOM } from "@acme/shared/app/constants";
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
+import { CLOSE_ZOOM } from "~/utils/constants";
+import { RERENDER_LOGS } from "~/utils/constants";
 
 import { orpc, useQuery } from "~/orpc/react";
 import { mapStore } from "~/utils/store/map";

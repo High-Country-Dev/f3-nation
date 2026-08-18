@@ -1,4 +1,4 @@
-import { CLOSE_ZOOM } from "@acme/shared/app/constants";
+import { CLOSE_ZOOM } from "~/utils/constants";
 import { isDevelopment } from "@acme/shared/common/constants";
 
 import { isTouchDevice } from "./is-touch-device";

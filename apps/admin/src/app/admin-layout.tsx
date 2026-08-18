@@ -2,11 +2,7 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import { Menu } from "lucide-react";
 
-import {
-  ADMIN_HEADER_HEIGHT,
-  ADMIN_SIDEBAR_WIDTH,
-  Z_INDEX,
-} from "@acme/shared/app/constants";
+import { Z_INDEX } from "@acme/shared/app/constants";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import {
@@ -19,6 +15,7 @@ import {
 
 import { VersionInfo } from "~/app/_components/version-info";
 import { env } from "~/env";
+import { ADMIN_HEADER_HEIGHT, ADMIN_SIDEBAR_WIDTH } from "~/lib/constants";
 import { AdminNavLinks } from "./_components/admin-nav-links";
 import { AdminUserMenu } from "./_components/admin-user-menu";
 

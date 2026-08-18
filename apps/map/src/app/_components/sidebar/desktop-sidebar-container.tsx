@@ -1,4 +1,4 @@
-import { SIDEBAR_WIDTH } from "@acme/shared/app/constants";
+import { SIDEBAR_WIDTH } from "~/utils/constants";
 import { cn } from "@acme/ui";
 
 export const DesktopSidebarContainer = (props: {

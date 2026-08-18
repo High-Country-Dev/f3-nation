@@ -6,7 +6,7 @@ import type { DataType, ModalType } from "~/utils/store/modal";
 import { FormDebugData } from "~/app/_components/forms/dev-debug-component";
 import { ContactDetailsForm } from "~/app/_components/forms/form-inputs/contact-details-form";
 import { BaseModal } from "~/app/_components/modal/base-modal";
-import { isProduction } from "@acme/shared/common/constants";
+import { isProduction } from "~/utils/constants";
 import { client } from "~/orpc/client";
 import { LocationDetailsForm } from "../../forms/form-inputs/location-details-form";
 import { RegionAOEventSelector } from "../../forms/form-inputs/region-ao-event-selector";

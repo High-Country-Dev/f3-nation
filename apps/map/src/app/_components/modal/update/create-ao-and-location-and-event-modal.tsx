@@ -1,5 +1,5 @@
 import type { CreateAOAndLocationAndEventType } from "@acme/validators/request-schemas";
-import { isProduction } from "@acme/shared/common/constants";
+import { isProduction } from "~/utils/constants";
 import { Form, useForm } from "@acme/ui/form";
 import { CreateAOAndLocationAndEventSchema } from "@acme/validators/request-schemas";
 
