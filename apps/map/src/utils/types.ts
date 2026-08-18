@@ -2,6 +2,45 @@ import type { DayOfWeek } from "@acme/shared/app/enums";
 
 import type { RouterOutputs } from "~/orpc/types";
 
+type PlaceType = "street_address" | "geocode";
+
+export interface PlaceResult {
+  placePrediction: {
+    place: string; //"places/ChIJvfn0MnyAhYARNjY8LxCHdyY",
+    placeId: string; //"ChIJvfn0MnyAhYARNjY8LxCHdyY",
+    text: {
+      text: string; //"687 Folsom Street, San Francisco, CA, USA",
+      matches: {
+        endOffset: number;
+      }[];
+    };
+    structuredFormat: {
+      mainText: {
+        text: string; //"687 Folsom Street",
+        matches: {
+          endOffset: number;
+        }[];
+      };
+      secondaryText: {
+        text: string; //"San Francisco, CA, USA";
+      };
+    };
+    types: PlaceType[];
+  };
+}
+
+export interface PlaceDetails {
+  id: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  displayName: {
+    text: string;
+    languageCode: string;
+  };
+}
+
 export type F3Marker = NonNullable<
   RouterOutputs["map"]["location"]["locationWorkout"]
 >;

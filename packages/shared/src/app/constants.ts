@@ -1,32 +1,10 @@
-import { z } from "zod";
-
 export const F3_NATION_ORG_ID = 1;
 
-export enum SnapPoint {
-  "pt-0.95" = 0.95,
-  // "pt-0.5" = 0.5,
-  "pt-150px" = "150px",
-}
-
-export const DAY_ORDER = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
-export const SHORT_DAY_ORDER = ["Su", "M", "Tu", "W", "Th", "F", "Sa"] as const;
-
-export const DEFAULT_ZOOM = 2.9;
+// Used by both apps/map (default map view) and apps/admin (location-picker
+// fallback center) — genuinely 2-app-shared, unlike the other map-only
+// constants that moved out to apps/map/src/utils/constants.ts.
 export const BOONE_CENTER = [36.211104, -81.660849] as [number, number];
 export const DEFAULT_CENTER = BOONE_CENTER;
-
-export const CLOSE_ZOOM = 13;
-export const FAR_ZOOM = 4;
-export const COUNTRY_ZOOM = 5; // below 5 it is red
 
 export enum BreakPoints {
   MD = 640,
@@ -34,16 +12,6 @@ export enum BreakPoints {
 }
 
 export const HEADER_HEIGHT = 96;
-export const SIDEBAR_WIDTH = 360;
-
-export const ADMIN_SIDEBAR_WIDTH = 240;
-export const ADMIN_HEADER_HEIGHT = 64;
-
-export const MAX_DESKTOP_WORKOUT_PANEL_WIDTH = 448; // must match to MD
-
-export const MAX_PLACES_AUTOCOMPLETE_RADIUS = 50000;
-
-export const SELECTED_ITEM_DEBOUNCE_TIME_MS = 100;
 
 export const Z_INDEX = {
   NAVIGATION_MENU: 1,
@@ -112,38 +80,6 @@ export const Z_INDEX = {
 
   LOADING_MODAL: 9001,
 } as const;
-
-export const MOBILE_SEARCH_RESULT_ITEM_HEIGHT = 128;
-
-export const MIN_TEXT_LENGTH_FOR_SEARCH_RESULTS = 3;
-
-export const feedbackSchema = z.object({
-  type: z.enum(["bug", "feature request", "feedback", "other"]),
-  subject: z.string(),
-  email: z.string(),
-  description: z.string(),
-});
-
-export type FeedbackSchema = z.infer<typeof feedbackSchema>;
-
-export const filterButtonClassName =
-  "text-sm w-full whitespace-nowrap font-semibold pointer-events-auto flex items-center justify-center gap-2 rounded-md bg-card px-2 py-1 shadow-sm text-foreground";
-
-// Basic is just signed in
-// Editor can change data for their region
-// Admin can change anything
-type AuthType = "none" | "admin" | "basic" | "editor";
-
-interface RouteBase {
-  __path: string;
-  __auth: AuthType;
-}
-
-type Route = RouteBase & {
-  [K: string]: Route | string;
-};
-
-type Routes = Record<string, Route>;
 
 export const routes = {
   index: {
@@ -235,47 +171,6 @@ export const routes = {
     },
   },
 } as const;
-
-export const getAuthRoutes = (routes: Routes, auth: AuthType): string[] => {
-  const authPaths: string[] = [];
-
-  const traverse = (obj: RouteBase | Routes, _parentKey = "") => {
-    if (
-      "__path" in obj &&
-      typeof obj.__path === "string" &&
-      obj.__auth === auth
-    ) {
-      authPaths.push(obj.__path);
-    }
-
-    for (const [key, value] of Object.entries(obj as Record<string, Route>)) {
-      if (!["__path", "__auth"].includes(key)) {
-        traverse(value, key);
-      }
-    }
-  };
-
-  traverse(routes);
-  return authPaths;
-};
-
-export const ADMIN_PATHS = getAuthRoutes(routes, "admin");
-export const EDITOR_PATHS = getAuthRoutes(routes, "editor");
-
-export enum AppType {
-  MOBILE = "expo-react",
-  WEB = "nextjs-react",
-  RSC = "rsc",
-  UNKNOWN = "unknown",
-}
-
-export enum Permissions {
-  ADMIN = "admin",
-  EDIT = "edit",
-}
-
-export const START_END_TIME_DB_FORMAT = "HHmm";
-export const START_END_TIME_DISPLAY_FORMAT = "h:mmA";
 
 export const COUNTRIES = [
   { name: "Afghanistan", code: "AF" },
@@ -475,43 +370,4 @@ export const COUNTRIES = [
   { name: "Zimbabwe", code: "ZW" },
 ];
 
-export const TEST_NATION_ORG_ID = 1;
-export const TEST_REGION_1_ORG_ID = 2;
-export const TEST_REGION_2_ORG_ID = 3;
-export const TEST_REGION_3_ORG_ID = 4;
-export const TEST_SECTOR_ORG_ID = 5;
-export const TEST_AREA_ORG_ID = 6;
-export const TEST_AO_1_ORG_ID = 7;
-export const TEST_AO_2_ORG_ID = 8;
-export const TEST_REGION_1_LOCATION_ID = 21;
-export const TEST_REGION_1_AO_ID = 22;
-export const TEST_EDITOR_USER_ID = 1;
-export const TEST_ADMIN_USER_ID = 2;
-export const TEST_EDITOR_ROLE_ID = 1;
-export const TEST_ADMIN_ROLE_ID = 2;
-
-export const EVENT_CATEGORY_OPTIONS = [
-  { label: "1st F", value: "first_f" },
-  { label: "2nd F", value: "second_f" },
-  { label: "3rd F", value: "third_f" },
-] as const;
-
-export const EVENT_CATEGORY_LABEL_MAP: Record<string, string> =
-  Object.fromEntries(EVENT_CATEGORY_OPTIONS.map((o) => [o.value, o.label]));
-
 export const API_PREFIX_V1 = "/v1";
-export const MAP_API_PREFIX = "/map";
-
-export enum ApiKeyTags {
-  API = "api",
-  API_KEY = "api-key",
-  AUTH = "auth",
-  EVENT = "event",
-  EVENT_TYPE = "event-type",
-  FEEDBACK = "feedback",
-  LOCATION = "location",
-  ORG = "org",
-  PING = "ping",
-  REQUEST = "request",
-  USER = "user",
-}

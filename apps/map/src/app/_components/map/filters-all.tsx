@@ -5,8 +5,8 @@ import { useMemo } from "react";
 
 import { X } from "lucide-react";
 
-import { SHORT_DAY_ORDER } from "@acme/shared/app/constants";
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
+import { SHORT_DAY_ORDER } from "~/utils/constants";
+import { RERENDER_LOGS } from "~/utils/constants";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import {

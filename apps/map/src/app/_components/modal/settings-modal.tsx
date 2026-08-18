@@ -18,9 +18,9 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useCallback } from "react";
 
+import { ProviderId } from "@acme/auth/enums";
 import { Z_INDEX } from "@acme/shared/app/constants";
 import { isDevelopment, isProd } from "@acme/shared/common/constants";
-import { ProviderId } from "@acme/shared/common/enums";
 import { cn } from "@acme/ui";
 import {
   Dialog,

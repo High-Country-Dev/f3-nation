@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
+import { RERENDER_LOGS } from "~/utils/constants";
 
 import { Header } from "./header";
 import { SubmitBugReportCard } from "./submit-bug-report-card";

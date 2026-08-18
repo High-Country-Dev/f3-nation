@@ -4,12 +4,7 @@ import type { ComponentProps } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Search, XCircle } from "lucide-react";
 
-import {
-  DEFAULT_CENTER,
-  MIN_TEXT_LENGTH_FOR_SEARCH_RESULTS,
-  SIDEBAR_WIDTH,
-  Z_INDEX,
-} from "@acme/shared/app/constants";
+import { DEFAULT_CENTER, Z_INDEX } from "@acme/shared/app/constants";
 import { TestId } from "@acme/shared/common/enums";
 import { cn } from "@acme/ui";
 import { Checkbox } from "@acme/ui/checkbox";
@@ -19,6 +14,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { Spinner } from "@acme/ui/spinner";
 
 import { orpc, useQuery } from "~/orpc/react";
+import {
+  MIN_TEXT_LENGTH_FOR_SEARCH_RESULTS,
+  SIDEBAR_WIDTH,
+} from "~/utils/constants";
 import { useOnKeyPress } from "~/utils/hooks/use-on-key-press";
 import { useKeyPress } from "~/utils/key-press/hook";
 import { onClickPlaceRowMap } from "~/utils/on-click-place-row-map";

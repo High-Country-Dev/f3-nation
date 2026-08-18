@@ -3,7 +3,7 @@
 import type { ComponentProps } from "react";
 import { useEffect, useMemo, useRef } from "react";
 
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
+import { RERENDER_LOGS } from "~/utils/constants";
 import { TestId } from "@acme/shared/common/enums";
 import { cn } from "@acme/ui";
 

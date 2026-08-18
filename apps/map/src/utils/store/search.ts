@@ -1,7 +1,8 @@
 import { createRef } from "react";
 
-import type { PlaceResult } from "@acme/shared/app/types";
 import { ZustandStore } from "@acme/shared/common/classes";
+
+import type { PlaceResult } from "~/utils/types";
 
 const initialState = {
   text: "",

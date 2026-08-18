@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 import { Z_INDEX } from "@acme/shared/app/constants";
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
+import { RERENDER_LOGS } from "~/utils/constants";
 import { cn } from "@acme/ui";
 import { Checkbox } from "@acme/ui/checkbox";
 import { Label } from "@acme/ui/label";

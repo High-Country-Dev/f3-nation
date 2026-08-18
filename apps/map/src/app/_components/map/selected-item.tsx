@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Maximize2, X } from "lucide-react";
 
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
+import { RERENDER_LOGS } from "~/utils/constants";
 import { TestId } from "@acme/shared/common/enums";
 import { cn } from "@acme/ui";
 

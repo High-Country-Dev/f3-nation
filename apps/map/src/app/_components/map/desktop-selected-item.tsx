@@ -4,13 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import cloneDeep from "lodash/cloneDeep";
 import debounce from "lodash/debounce";
 
-import {
-  SELECTED_ITEM_DEBOUNCE_TIME_MS,
-  Z_INDEX,
-} from "@acme/shared/app/constants";
+import { Z_INDEX } from "@acme/shared/app/constants";
 import { cn } from "@acme/ui";
 
 import { getQueryClient, orpc } from "~/orpc/react";
+import { SELECTED_ITEM_DEBOUNCE_TIME_MS } from "~/utils/constants";
 import { mapStore } from "~/utils/store/map";
 import { selectedItemStore } from "~/utils/store/selected-item";
 import { SelectedItem } from "./selected-item";

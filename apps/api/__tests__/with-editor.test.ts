@@ -4,8 +4,9 @@ import type { JWT } from "next-auth/jwt";
 import { getToken } from "next-auth/jwt";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { EDITOR_PATHS } from "@acme/shared/app/constants";
 import type { OrgRole } from "@acme/shared/app/types";
+
+import { EDITOR_PATHS } from "../middleware/paths";
 
 import withEditor from "../middleware/with-editor";
 

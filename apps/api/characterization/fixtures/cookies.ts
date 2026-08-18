@@ -1,7 +1,7 @@
 import { encode } from "next-auth/jwt";
 
+import { COOKIE_NAME } from "@acme/auth/constants";
 import type { OrgRole } from "@acme/shared/app/types";
-import { COOKIE_NAME } from "@acme/shared/common/constants";
 
 /**
  * The non-prod cookie prefix is empty (packages/auth/src/config.ts), and in

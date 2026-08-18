@@ -2,9 +2,6 @@
 
 import * as React from "react";
 
-import type { FeedbackSchema } from "@acme/shared/app/constants";
-import { feedbackSchema } from "@acme/shared/app/constants";
-import { FeedbackType } from "@acme/shared/app/enums";
 import { Button } from "@acme/ui/button";
 import {
   Card,
@@ -34,6 +31,8 @@ import { Textarea } from "@acme/ui/textarea";
 import { toast } from "@acme/ui/toast";
 
 import { orpc, useMutation } from "~/orpc/react";
+import { feedbackSchema, FeedbackType } from "~/utils/constants";
+import type { FeedbackSchema } from "~/utils/constants";
 
 const typeToTitle = (type: FeedbackType) => {
   switch (type) {

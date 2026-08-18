@@ -1,7 +1,7 @@
 import { CircleQuestionMark } from "lucide-react";
 import Link from "next/link";
 
-import { filterButtonClassName } from "@acme/shared/app/constants";
+import { filterButtonClassName } from "~/utils/constants";
 import { cn } from "@acme/ui";
 
 export const HelpButton = () => {

@@ -1,8 +1,22 @@
-import type { PlaceResult } from "@acme/shared/app/types";
-import { MAX_PLACES_AUTOCOMPLETE_RADIUS } from "@acme/shared/app/constants";
-import { zoomToRadius } from "@acme/shared/app/functions";
-
+import { MAX_PLACES_AUTOCOMPLETE_RADIUS } from "./constants";
 import { getGoogleApiKey } from "./runtime-config";
+import type { PlaceResult } from "./types";
+
+function zoomToRadius(zoom: number): number {
+  // Clamp zoom between 4 and 20
+  // Constants
+  const EARTH_EQUATORIAL_RADIUS = 6378137; // in meters
+  const TILE_SIZE = 256;
+
+  // Calculate the ground resolution at the equator
+  const groundResolution =
+    (EARTH_EQUATORIAL_RADIUS * 2 * Math.PI) / (TILE_SIZE * Math.pow(2, zoom));
+
+  // Calculate radius (assuming the visible area is 256x256 pixels)
+  const radius = (groundResolution * TILE_SIZE) / 2;
+
+  return Math.min(Math.max(radius, 0), MAX_PLACES_AUTOCOMPLETE_RADIUS);
+}
 
 // Cache for autocomplete results (key: input+center+zoom, value: results)
 const autocompleteCache = new Map<
