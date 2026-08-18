@@ -9,19 +9,19 @@ import { SaveProvider } from "@/lib/save-context";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { VersionInfo } from "@/components/version-info";
 import { getChangelog } from "@/lib/changelog";
+import { resolveBaseUrl } from "@/lib/utils";
 import { env } from "@/env";
 import packageJson from "../../package.json";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const meBaseUrl = (() => {
-  // NEXT_PUBLIC_SITE_URL is typed required, but under skipValidation
-  // (CI/lint builds) env.* passes through unvalidated and can be
-  // undefined — keep this fallback.
-  const raw = env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SITE_URL;
-  if (!raw) return new URL("http://localhost:3003");
-  return new URL(raw);
-})();
+// NEXT_PUBLIC_SITE_URL is typed required, but under skipValidation
+// (CI/lint builds) env.* passes through unvalidated and can be
+// undefined — resolveBaseUrl's fallback covers that.
+const meBaseUrl = resolveBaseUrl(
+  env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SITE_URL,
+  "http://localhost:3003",
+);
 
 export const metadata: Metadata = {
   metadataBase: meBaseUrl,
