@@ -3,6 +3,7 @@ import type Mail from "nodemailer/lib/mailer";
 
 import { env } from "@acme/env";
 
+import { logError, logInfo } from "./logger";
 import type { TemplateType } from "./templates";
 import { DefaultSubject, renderTemplate, Templates } from "./templates";
 
@@ -11,6 +12,52 @@ import { DefaultSubject, renderTemplate, Templates } from "./templates";
 // rather than pinning SMTPTransport (which mismatches under nodemailer 9).
 type AppTransporter = ReturnType<typeof nodemailer.createTransport>;
 type SentMessageInfo = Awaited<ReturnType<AppTransporter["sendMail"]>>;
+
+// The real production identity (see issue #603) — used only as a guard, not
+// a default. If a non-prod deployment ends up resolving its sender to this
+// address (e.g. EMAIL_FROM was copy-pasted from prod config), recipients
+// would be unable to tell a staging/dev notification from a real one.
+const PRODUCTION_SENDER_ADDRESS = "support@f3nation.com";
+
+const KNOWN_CHANNELS = ["local", "ci", "branch", "dev", "staging", "prod"];
+
+function extractAddress(from: string): string {
+  // "Display Name <addr@x.com>" -> "addr@x.com"; a bare address is returned as-is.
+  const match = /<([^>]+)>/.exec(from);
+  return (match?.[1] ?? from).trim().toLowerCase();
+}
+
+/**
+ * Refuses to send rather than risk a non-production deployment silently
+ * emailing recipients under the production sender identity. See issue #603.
+ */
+function assertSenderMatchesEnvironment(from: string): void {
+  const channel: string | undefined = env.NEXT_PUBLIC_CHANNEL;
+
+  if (channel === "prod") return;
+
+  if (!channel || !KNOWN_CHANNELS.includes(channel)) {
+    logError("mail.sender_identity.unknown_environment", {
+      channel: channel ?? "(missing)",
+    });
+    throw new Error(
+      `Refusing to send email: NEXT_PUBLIC_CHANNEL is missing or unrecognized ` +
+        `("${channel ?? "(missing)"}"), so the sender identity for this ` +
+        `deployment can't be verified.`,
+    );
+  }
+
+  if (extractAddress(from) === PRODUCTION_SENDER_ADDRESS) {
+    logError("mail.sender_identity.production_identity_in_non_prod", {
+      channel,
+    });
+    throw new Error(
+      `Refusing to send email: this is a "${channel}" deployment, but its ` +
+        `sender is configured as the production identity ` +
+        `(${PRODUCTION_SENDER_ADDRESS}). Check EMAIL_FROM for this environment.`,
+    );
+  }
+}
 
 /**
  * Default recipients for each template
@@ -77,13 +124,17 @@ export class MailService {
     // Create batches
     for (let i = 0; i < paramsArray.length; i += batchSize) {
       const batchParams = paramsArray.slice(i, i + batchSize);
-      const batchMessages = batchParams.map((item) => ({
-        ...item,
-        from: item.from ?? env.EMAIL_FROM,
-        to: item.to ?? DefaultTo[template],
-        subject: item.subject ?? DefaultSubject[template],
-        html: this.getTemplate(template, item),
-      }));
+      const batchMessages = batchParams.map((item) => {
+        const from = item.from ?? env.EMAIL_FROM;
+        assertSenderMatchesEnvironment(from);
+        return {
+          ...item,
+          from,
+          to: item.to ?? DefaultTo[template],
+          subject: item.subject ?? DefaultSubject[template],
+          html: this.getTemplate(template, item),
+        };
+      });
       const sentBatch = await this.sendViaTransporter(batchMessages);
       sent.push(...sentBatch);
     }
@@ -129,11 +180,11 @@ export class MailService {
             ?.sendMail({ ...msg, headers: sendGridHeaders })
             .then((info) => {
               sentInfo.push(info);
-              console.log("\x1b[32m", "Message sent successfully!");
+              logInfo("mail.send.success", {});
             })
             .catch((error: Error) => {
               sentInfo.push(error);
-              console.error("Email send failed:", error);
+              logError("mail.send.failed", {}, error);
             });
         }),
       );
