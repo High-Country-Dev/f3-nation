@@ -101,4 +101,18 @@ describe("MailService sender-identity guard", () => {
       ),
     ).rejects.toThrow(/missing or unrecognized/i);
   });
+
+  // A bracket-only parser (`/<([^>]+)>/`) would miss this — no angle brackets,
+  // just the address followed by an RFC 5322 comment. Nodemailer accepts this
+  // shape, so the guard must too.
+  it("refuses to send when the production address appears without angle brackets", async () => {
+    mockEnv.EMAIL_FROM = "support@f3nation.com (F3 Support)";
+    const mail = new MailService();
+    await expect(
+      mail.sendTemplateMessages(
+        Templates.mapChangeRequest,
+        mapChangeRequestParams,
+      ),
+    ).rejects.toThrow(/production identity/i);
+  });
 });

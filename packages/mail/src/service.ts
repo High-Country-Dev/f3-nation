@@ -21,10 +21,14 @@ const PRODUCTION_SENDER_ADDRESS = "support@f3nation.com";
 
 const KNOWN_CHANNELS = ["local", "ci", "branch", "dev", "staging", "prod"];
 
-function extractAddress(from: string): string {
-  // "Display Name <addr@x.com>" -> "addr@x.com"; a bare address is returned as-is.
-  const match = /<([^>]+)>/.exec(from);
-  return (match?.[1] ?? from).trim().toLowerCase();
+// Deliberately not a precise RFC 5322 parser: `from` can arrive in any
+// Nodemailer-accepted shape (quoted display name, trailing comment, multiple
+// mailboxes, ...), and this guard needs to fail closed. A substring match
+// only widens what it catches — the failure direction of a false positive
+// (refusing to send) is safe, unlike a false negative (silently sending
+// under the production identity).
+function resolvesToProductionIdentity(from: string): boolean {
+  return from.toLowerCase().includes(PRODUCTION_SENDER_ADDRESS);
 }
 
 /**
@@ -47,7 +51,7 @@ function assertSenderMatchesEnvironment(from: string): void {
     );
   }
 
-  if (extractAddress(from) === PRODUCTION_SENDER_ADDRESS) {
+  if (resolvesToProductionIdentity(from)) {
     logError("mail.sender_identity.production_identity_in_non_prod", {
       channel,
     });
