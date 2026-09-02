@@ -111,6 +111,20 @@ export const TextSearchResultsProvider = ({
             matchingAoNames.add(event.aoName);
           }
         }
+        // Skip the generic AO-level result when one of that AO's own events
+        // at this location also matches by name — the event-name branch
+        // below already produces a result for it, with a resolved eventId
+        // that actually navigates on click. Without this, an AO whose
+        // workout shares (or contains) its name renders two rows for the
+        // same destination, one of which doesn't resolve to that workout.
+        for (const aoName of matchingAoNames) {
+          const hasMatchingEventName = location.events.some(
+            (e) =>
+              e.aoName === aoName &&
+              e.name.toLowerCase().includes(text.toLowerCase()),
+          );
+          if (hasMatchingEventName) matchingAoNames.delete(aoName);
+        }
         return Array.from(matchingAoNames).map((aoName) => {
           const aoEvent = location.events.find((e) => e.aoName === aoName);
           const searchResult: F3LocationMapSearchResult = {
