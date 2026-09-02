@@ -31,6 +31,7 @@ import type { RouterOutputs } from "~/orpc/types";
 import { useDebounce } from "~/utils/hooks/use-debounce";
 import { DeleteType, ModalType, openModal } from "~/utils/store/modal";
 import { OrgFilter } from "./org-filter";
+import { USERS_DEFAULT_INPUT } from "./users-default-input";
 
 type Org = RouterOutputs["org"]["all"]["orgs"][number];
 
@@ -153,17 +154,16 @@ const UserStatusFilter = ({
 
 export const UserTable = () => {
   const [selectedStatuses, setSelectedStatuses] = useState<UserStatus[]>([
-    "active",
+    ...USERS_DEFAULT_INPUT.statuses,
   ]);
   const [selectedRoles, setSelectedRoles] = useState<UserRole[]>([
-    "admin",
-    "editor",
+    ...USERS_DEFAULT_INPUT.roles,
   ]);
   const [selectedOrgs, setSelectedOrgs] = useState<Org[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(USERS_DEFAULT_INPUT.searchTerm);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const { pagination, setPagination } = usePagination({
-    pageSize: 20,
+    pageSize: USERS_DEFAULT_INPUT.pageSize,
   });
 
   // Separate the role selection handler to have better control
