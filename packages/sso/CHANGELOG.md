@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0](https://github.com/High-Country-Dev/f3-nation/compare/pkg-sso@0.4.0...pkg-sso@0.5.0) (2026-09-02)
+
+
+### Features
+
+* **auth:** issue an id_token on the authorization_code and refresh_token grants ([#749](https://github.com/High-Country-Dev/f3-nation/issues/749)) ([0a8a25d](https://github.com/High-Country-Dev/f3-nation/commit/0a8a25d635d618383d57669eff4415b32b6e3fef))
+* **sso,me,admin:** consolidating auth code ([#579](https://github.com/High-Country-Dev/f3-nation/issues/579)) ([bfae7a9](https://github.com/High-Country-Dev/f3-nation/commit/bfae7a9ed5e9ea06516edb996dd625252659d1b1))
+* **sso:** new next wrapper for sso, partially completed ([#688](https://github.com/High-Country-Dev/f3-nation/issues/688)) ([8555b36](https://github.com/High-Country-Dev/f3-nation/commit/8555b3687808c26713f9b7b524e65296756d4504))
+
+
+### Bug Fixes
+
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+* **slackbot,tailwind,sso:** fixing local lint issues ([#659](https://github.com/High-Country-Dev/f3-nation/issues/659)) ([030cb9b](https://github.com/High-Country-Dev/f3-nation/commit/030cb9becb28159e32f6340201dc5bf9149f0124))
+
 ## [0.4.0](https://github.com/F3-Nation/f3-nation/compare/pkg-sso@0.3.0...pkg-sso@0.4.0) (2026-08-18)
 
 
