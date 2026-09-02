@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.5.0](https://github.com/High-Country-Dev/f3-nation/compare/homepage@1.4.0...homepage@1.5.0) (2026-09-02)
+
+
+### Features
+
+* **health:** add /status to homepage and introduce shared package for reporting ([#657](https://github.com/High-Country-Dev/f3-nation/issues/657)) ([88e7547](https://github.com/High-Country-Dev/f3-nation/commit/88e754751e25461e25c7361c878c78e3902daad4))
+* **homepage:** adding syncbot to the admin section ([#630](https://github.com/High-Country-Dev/f3-nation/issues/630)) ([755ebb9](https://github.com/High-Country-Dev/f3-nation/commit/755ebb9429659839c3ad6e869435a638247343bc))
+
+
+### Bug Fixes
+
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @acme/ui bumped to 0.1.4
+    * @f3nation/health bumped to 1.2.0
+  * devDependencies
+    * @acme/tailwind-config bumped to 0.1.4
+
 ## [1.4.0](https://github.com/F3-Nation/f3-nation/compare/homepage@1.3.0...homepage@1.4.0) (2026-08-12)
 
 

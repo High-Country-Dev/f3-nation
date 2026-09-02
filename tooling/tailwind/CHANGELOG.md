@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.4](https://github.com/High-Country-Dev/f3-nation/compare/tailwind-config@0.1.3...tailwind-config@0.1.4) (2026-09-02)
+
+
+### Bug Fixes
+
+* **deps:** pin internal @acme/* refs to workspace:* to prevent release-please version drift ([#587](https://github.com/High-Country-Dev/f3-nation/issues/587)) ([21ded4b](https://github.com/High-Country-Dev/f3-nation/commit/21ded4bef25dbdd00b2e66e5d8abda516b7dd0b1))
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+* **repo:** defer E2E_BASE_URL validation to Playwright globalSetup ([a1246c3](https://github.com/High-Country-Dev/f3-nation/commit/a1246c352f029c3f35db36128a86b553353b0dc7))
+* **slackbot,tailwind,sso:** fixing local lint issues ([#659](https://github.com/High-Country-Dev/f3-nation/issues/659)) ([030cb9b](https://github.com/High-Country-Dev/f3-nation/commit/030cb9becb28159e32f6340201dc5bf9149f0124))
+* **ui:** make cmdk combobox options selectable and restore button cursor ([#582](https://github.com/High-Country-Dev/f3-nation/issues/582)) ([a7ac4d2](https://github.com/High-Country-Dev/f3-nation/commit/a7ac4d2a99821e51971654af7d49893c2cce3915))
+
 ## [0.1.3](https://github.com/F3-Nation/f3-nation/compare/tailwind-config@0.1.2...tailwind-config@0.1.3) (2026-07-14)
 
 

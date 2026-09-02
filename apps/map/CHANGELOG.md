@@ -1,5 +1,45 @@
 # Changelog
 
+## [7.3.0](https://github.com/High-Country-Dev/f3-nation/compare/map@7.2.1...map@7.3.0) (2026-09-02)
+
+
+### Features
+
+* **admin,map:** enhance invalidateQueries to match nested router paths by segment name ([#701](https://github.com/High-Country-Dev/f3-nation/issues/701)) ([b5600ed](https://github.com/High-Country-Dev/f3-nation/commit/b5600edd2228a11dcf80988c46d9be935731606c))
+* **map:** add start date column to workouts table ([#807](https://github.com/High-Country-Dev/f3-nation/issues/807)) ([c49b48d](https://github.com/High-Country-Dev/f3-nation/commit/c49b48d6131e13454425d3ce0660e02093bba175))
+* **map:** add validation to ensure event end time is after start time ([f62b213](https://github.com/High-Country-Dev/f3-nation/commit/f62b21340ac395b563ec5f44d97d3a165191da4c))
+* **map:** surface selector load errors and remove dead newEventId ([fb6084c](https://github.com/High-Country-Dev/f3-nation/commit/fb6084c746ae6173be258d192ca980d78c7f7a57))
+* **repo:** ai-native sdlc — previews, e2e, ai review/triage ([#685](https://github.com/High-Country-Dev/f3-nation/issues/685)) ([1c66c22](https://github.com/High-Country-Dev/f3-nation/commit/1c66c228727c9fbc4c5575f42e41c5b2576267be))
+
+
+### Bug Fixes
+
+* **admin,map,api:** polish from independent review of [#274](https://github.com/High-Country-Dev/f3-nation/issues/274) fixes ([2b0e5f0](https://github.com/High-Country-Dev/f3-nation/commit/2b0e5f08bab4e2283bfd2433e70bdd743d34de7c))
+* **admin,map:** keep server logger out of the client bundle ([#274](https://github.com/High-Country-Dev/f3-nation/issues/274) CI) ([4ea5c12](https://github.com/High-Country-Dev/f3-nation/commit/4ea5c1299fde6e0ff06b582bed1d607179b6fd35))
+* **admin,map:** stop swallowing review-flow failures ([#274](https://github.com/High-Country-Dev/f3-nation/issues/274) review) ([1e799ab](https://github.com/High-Country-Dev/f3-nation/commit/1e799ab3f5be0e045ae682fc65379d1690b782a9))
+* **admin:** enhance error handling and logging for request details ([2629175](https://github.com/High-Country-Dev/f3-nation/commit/262917536a32715fff8e709e41a3a96d6e4e1a1e))
+* **deps:** pin internal @acme/* refs to workspace:* to prevent release-please version drift ([#587](https://github.com/High-Country-Dev/f3-nation/issues/587)) ([21ded4b](https://github.com/High-Country-Dev/f3-nation/commit/21ded4bef25dbdd00b2e66e5d8abda516b7dd0b1))
+* **map,admin:** regions in region picker were grayed out ([37cec72](https://github.com/High-Country-Dev/f3-nation/commit/37cec722b933f6a121283403b3a5eb9fd8900f5e))
+* **map,shared:** consolidate search trigger to 3 chars, label panel close button ([#607](https://github.com/High-Country-Dev/f3-nation/issues/607)) ([f1e7751](https://github.com/High-Country-Dev/f3-nation/commit/f1e7751cb45c8edf82d3a6673d1d02d0a704409e))
+* **map:** mask session replay text and media ([#593](https://github.com/High-Country-Dev/f3-nation/issues/593)) ([a705d76](https://github.com/High-Country-Dev/f3-nation/commit/a705d767d4091566f8ed8224f968bc997694205e))
+* **map:** review-driven fixes surfaced while reinstating E2E coverage ([fb41eaa](https://github.com/High-Country-Dev/f3-nation/commit/fb41eaaf739708c5f9875d39d09c0a4a89a0e443))
+* **map:** streamline form inputs and fix map update pane ([f1a09fe](https://github.com/High-Country-Dev/f3-nation/commit/f1a09fe1b3126e697e6a3299f3aa4952f12d1267))
+* **map:** update request schema fixture ([78e5e22](https://github.com/High-Country-Dev/f3-nation/commit/78e5e22c1f31920f36af98bfd970eef45427aec1))
+* **map:** update uuid dependency and refine map contribution guidelines ([aba0ae9](https://github.com/High-Country-Dev/f3-nation/commit/aba0ae9e83d92db666de871b7311917efb2910c0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @acme/api bumped to 0.8.0
+    * @acme/auth bumped to 0.3.0
+    * @acme/logger bumped to 0.1.2
+    * @acme/shared bumped to 0.2.0
+    * @acme/tailwind-config bumped to 0.1.4
+    * @acme/ui bumped to 0.1.4
+    * @acme/validators bumped to 0.4.0
+
 ## [7.2.1](https://github.com/F3-Nation/f3-nation/compare/map@7.2.0...map@7.2.1) (2026-08-18)
 
 
