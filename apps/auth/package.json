@@ -12,6 +12,7 @@
     "start": "next start",
     "test": "pnpm with-env vitest --run --coverage",
     "typecheck": "tsc --noEmit",
+    "typegen": "next typegen",
     "add-client": "tsx scripts/add-client.ts",
     "with-env": "dotenv -e .env --"
   },

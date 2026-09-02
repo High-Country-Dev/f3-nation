@@ -10,6 +10,7 @@ jiti("./src/env");
 const config = {
   output: "standalone",
   reactStrictMode: true,
+  typedRoutes: true,
 
   transpilePackages: ["@acme/logger", "@acme/ui", "@acme/validators"],
 

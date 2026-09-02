@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -11,7 +12,11 @@ import { env } from "~/env";
 import { logDebug, logWarn } from "~/lib/logging";
 import { getMyProfile } from "~/lib/api/client";
 
-const NO_ADMIN_ACCESS_PATH = `${routes.admin.noAccess.__path}?reason=no-admin-access`;
+// routes.admin.noAccess.__path + a query string — genuinely one of this
+// app's own routes, but the template literal widens to `string` once
+// assigned to a module-level const, so typedRoutes can't verify it here.
+const NO_ADMIN_ACCESS_PATH =
+  `${routes.admin.noAccess.__path}?reason=no-admin-access` as Route;
 
 const getCachedSessionPayload = cache(async (accessToken: string) => {
   const result = await verifyAccessToken(
