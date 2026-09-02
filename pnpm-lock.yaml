@@ -1603,6 +1603,9 @@ importers:
       '@acme/env':
         specifier: workspace:*
         version: link:../env
+      '@acme/logger':
+        specifier: workspace:*
+        version: link:../logger
       nodemailer:
         specifier: 'catalog:'
         version: 9.0.5
@@ -1619,6 +1622,9 @@ importers:
       '@types/nodemailer':
         specifier: 'catalog:'
         version: 8.0.1
+      '@vitest/coverage-v8':
+        specifier: 'catalog:'
+        version: 4.1.10(vitest@4.1.10)
       eslint:
         specifier: 'catalog:'
         version: 10.8.1(jiti@2.7.0)(supports-color@8.1.1)
@@ -1628,6 +1634,12 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vite:
+        specifier: 'catalog:'
+        version: 8.2.1(@types/node@25.9.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.12)(yaml@2.9.0)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@25.9.2)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1)(vite@8.2.1(@types/node@25.9.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.48.0)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/shared:
     dependencies:
