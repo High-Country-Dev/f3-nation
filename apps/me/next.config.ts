@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  typedRoutes: true,
   transpilePackages: ["@acme/logger"],
   // pino-pretty relies on worker threads (thread-stream); keep pino external so
   // Next.js does not try to bundle it.

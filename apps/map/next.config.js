@@ -11,6 +11,7 @@ jiti("./src/env");
 const config = {
   output: "standalone",
   reactStrictMode: true,
+  typedRoutes: true,
 
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [

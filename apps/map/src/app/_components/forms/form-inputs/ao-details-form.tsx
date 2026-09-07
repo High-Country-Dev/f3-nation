@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import { useState } from "react";
 import Link from "next/link";
 import { ImageOff } from "lucide-react";
@@ -78,7 +79,9 @@ export const AODetailsForm = <_T extends AODetailsFormValues>() => {
             Logo changes must be done in{" "}
             {adminUrl ? (
               <Link
-                href={adminUrl}
+                // External link to a separate app (admin.f3nation.com), not
+                // one of this app's own page routes.
+                href={adminUrl as Route}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline"

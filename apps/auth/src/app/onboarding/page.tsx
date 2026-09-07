@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -81,8 +82,9 @@ function OnboardingForm() {
         return;
       }
 
-      // Redirect back to the original flow
-      router.push(callbackUrl);
+      // Redirect back to the original flow. Caller-supplied, not
+      // statically one of this app's own routes.
+      router.push(callbackUrl as Route);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

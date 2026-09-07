@@ -8,7 +8,7 @@ import { cn } from "@acme/ui";
 export const F3Logo = ({
   className,
   ...rest
-}: Partial<LinkProps> & { className?: string }) => {
+}: Partial<LinkProps<string>> & { className?: string }) => {
   return (
     <Link
       href="https://f3nation.com/"

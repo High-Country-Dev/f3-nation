@@ -1,4 +1,5 @@
 import { Globe, Mail, Phone } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 
 import { cn } from "@acme/ui";
@@ -131,7 +132,9 @@ export const ContactLinks = ({
       {links.map(({ url, icon: Icon, label }) => (
         <Link
           key={label}
-          href={url!}
+          // External/protocol links (mailto:, tel:, https:), never one of
+          // this app's own page routes.
+          href={url! as Route}
           target={
             url!.startsWith("mailto:") || url!.startsWith("tel:")
               ? undefined
