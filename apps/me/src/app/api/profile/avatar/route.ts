@@ -7,6 +7,7 @@ import {
   updateMyProfile,
   getMyProfile,
 } from "@/lib/api/client";
+import { env } from "@/env";
 import { logError } from "@/lib/logging";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
       "me.avatar.upload_failed",
       {
         sessionUserId,
-        apiBaseUrl: process.env.F3_API_BASE_URL,
+        apiBaseUrl: env.F3_API_BASE_URL,
       },
       err,
     );
