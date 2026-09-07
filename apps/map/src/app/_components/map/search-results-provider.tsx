@@ -8,6 +8,7 @@ import { isTruthy } from "@acme/shared/common/functions";
 
 import { orpc, useQuery } from "~/orpc/react";
 import { useIsMobileWidth } from "~/utils/hooks/use-is-mobile-width";
+import { getMatchingAoNames } from "~/utils/matching-ao-names";
 import { debouncedPlacesAutocomplete } from "~/utils/place-autocomplete";
 import { mapStore } from "~/utils/store/map";
 import { searchStore } from "~/utils/store/search";
@@ -105,27 +106,7 @@ export const TextSearchResultsProvider = ({
 
     const _f3Results = [
       ...(filteredLocationMarkers?.flatMap((location) => {
-        const matchingAoNames = new Set<string>();
-        for (const event of location.events) {
-          if (event.aoName?.toLowerCase().includes(text.toLowerCase())) {
-            matchingAoNames.add(event.aoName);
-          }
-        }
-        // Skip the generic AO-level result when one of that AO's own events
-        // at this location also matches by name — the event-name branch
-        // below already produces a result for it, with a resolved eventId
-        // that actually navigates on click. Without this, an AO whose
-        // workout shares (or contains) its name renders two rows for the
-        // same destination, one of which doesn't resolve to that workout.
-        for (const aoName of matchingAoNames) {
-          const hasMatchingEventName = location.events.some(
-            (e) =>
-              e.aoName === aoName &&
-              e.name.toLowerCase().includes(text.toLowerCase()),
-          );
-          if (hasMatchingEventName) matchingAoNames.delete(aoName);
-        }
-        return Array.from(matchingAoNames).map((aoName) => {
+        return getMatchingAoNames(location.events, text).map((aoName) => {
           const aoEvent = location.events.find((e) => e.aoName === aoName);
           const searchResult: F3LocationMapSearchResult = {
             type: "location",
