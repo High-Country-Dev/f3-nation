@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
-import { EVENT_CATEGORY_LABEL_MAP, Z_INDEX } from "@acme/shared/app/constants";
+import { Z_INDEX } from "@acme/shared/app/constants";
 import { DayOfWeek } from "@acme/shared/app/enums";
 import {
   convertHH_mmToHHmm,
@@ -49,6 +49,7 @@ import {
 } from "@acme/validators";
 
 import gte from "lodash/gte";
+import { EVENT_CATEGORY_LABEL_MAP } from "~/lib/constants";
 import {
   invalidateQueries,
   orpc,

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFormContext } from "react-hook-form";
 
-import { isProduction } from "@acme/shared/common/constants";
+import { isProduction } from "~/utils/constants";
 import { isTruthy } from "@acme/shared/common/functions";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";

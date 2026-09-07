@@ -4,12 +4,13 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useWindowSize } from "@react-hook/window-size";
 import { APIProvider, ControlPosition, Map } from "@vis.gl/react-google-maps";
 
-import { BreakPoints, SIDEBAR_WIDTH } from "@acme/shared/app/constants";
+import { BreakPoints } from "@acme/shared/app/constants";
 import { TestId } from "@acme/shared/common/enums";
 import { Button } from "@acme/ui/button";
 import { Spinner } from "@acme/ui/spinner";
 import { useTheme } from "@acme/ui/theme";
 
+import { SIDEBAR_WIDTH } from "~/utils/constants";
 import type { RuntimeConfigStatus } from "~/utils/runtime-config";
 import { useRuntimeConfig } from "~/utils/runtime-config";
 import { useIsMobileWidth } from "~/utils/hooks/use-is-mobile-width";

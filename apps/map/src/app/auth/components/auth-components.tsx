@@ -5,9 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { z } from "zod";
 
+import { ProviderId } from "@acme/auth/enums";
 import { ZustandStore } from "@acme/shared/common/classes";
 import { normalizeEmail } from "@acme/shared/common/functions";
-import { ProviderId } from "@acme/shared/common/enums";
 import { cn } from "@acme/ui";
 import { Form, useForm } from "@acme/ui/form";
 import { ControlledInput, Input } from "@acme/ui/input";

@@ -1,6 +1,6 @@
 import { env } from "@acme/env";
-import { ProviderId } from "@acme/shared/common/enums";
 
+import { ProviderId } from "../enums";
 import { sendOtpVerificationRequestServer } from "./send-otp-verification-request-server";
 
 const OtpProvider = {

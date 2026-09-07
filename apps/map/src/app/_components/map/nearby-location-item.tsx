@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import Link from "next/link";
 import isNumber from "lodash/isNumber";
 
-import { isProduction, RERENDER_LOGS } from "@acme/shared/common/constants";
+import { isProduction, RERENDER_LOGS } from "~/utils/constants";
 import { cn } from "@acme/ui";
 
 import type { LocationMarkerWithDistance } from "./filtered-map-results-provider";

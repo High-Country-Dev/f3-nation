@@ -2,7 +2,6 @@ import { X } from "lucide-react";
 import { useMemo } from "react";
 import { Controller } from "react-hook-form";
 
-import { EVENT_CATEGORY_LABEL_MAP } from "@acme/shared/app/constants";
 import { DayOfWeek } from "@acme/shared/app/enums";
 import { isProd } from "@acme/shared/common/constants";
 import { Case } from "@acme/shared/common/enums";
@@ -14,6 +13,7 @@ import { Textarea } from "@acme/ui/textarea";
 import { toast } from "@acme/ui/toast";
 import { VirtualizedCombobox } from "@acme/ui/virtualized-combobox";
 
+import { EVENT_CATEGORY_LABEL_MAP } from "~/lib/constants";
 import { orpc, useQuery } from "~/orpc/react";
 import { useUpdateLocationFormContext } from "~/utils/forms";
 import type { AdminRequestFormProps } from "./admin-request-form-props";

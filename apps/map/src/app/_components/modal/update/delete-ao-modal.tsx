@@ -3,7 +3,7 @@ import { Form, useForm } from "@acme/ui/form";
 import { DeleteAOSchema } from "@acme/validators/request-schemas";
 
 import type { DataType, ModalType } from "~/utils/store/modal";
-import { isProduction } from "@acme/shared/common/constants";
+import { isProduction } from "~/utils/constants";
 import { client } from "~/orpc/client";
 import { FormDebugData } from "../../forms/dev-debug-component";
 import { ContactDetailsForm } from "../../forms/form-inputs/contact-details-form";

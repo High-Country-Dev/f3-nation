@@ -3,13 +3,14 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 
 import { and, eq, inArray, or, sql } from "@acme/db";
 import { env } from "@acme/env";
-import { EventTags, RegionRole } from "@acme/shared/app/enums";
+import { RegionRole } from "@acme/shared/app/enums";
 import { safeParseFloat } from "@acme/shared/common/functions";
 
 import type { InferInsertModel } from ".";
 import type { AppDb } from "./client";
 import { schema } from ".";
 import { db } from "./client";
+import { EventTags } from "./enums";
 import { getDb } from "./utils/functions";
 
 // import { getLocationDataFromGravityForms } from "./utils/get-location-data-gravity-forms";

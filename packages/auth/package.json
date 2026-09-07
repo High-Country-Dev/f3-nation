@@ -6,6 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./config": "./src/config.ts",
+    "./constants": "./src/constants.ts",
+    "./enums": "./src/enums.ts",
     "./lib/*": "./src/lib/*.ts"
   },
   "license": "AGPL-3.0-or-later",

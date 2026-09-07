@@ -8,7 +8,7 @@ import {
   Sunset,
 } from "lucide-react";
 
-import { filterButtonClassName } from "@acme/shared/app/constants";
+import { filterButtonClassName } from "~/utils/constants";
 import { cn } from "@acme/ui";
 
 import {

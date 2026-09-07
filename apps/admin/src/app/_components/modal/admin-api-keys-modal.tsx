@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import { z } from "zod";
 
 import { Z_INDEX } from "@acme/shared/app/constants";
-import type { RoleEntry } from "@acme/shared/app/types";
 import { safeParseInt } from "@acme/shared/common/functions";
 import { Button } from "@acme/ui/button";
 import {
@@ -37,6 +36,7 @@ import { Textarea } from "@acme/ui/textarea";
 import { toast } from "@acme/ui/toast";
 
 import { VirtualizedCombobox } from "@acme/ui/virtualized-combobox";
+import type { RoleEntry } from "~/lib/types";
 import { invalidateQueries, orpc, useMutation, useQuery } from "~/orpc/react";
 import { useAuth } from "~/utils/hooks/use-auth";
 import { closeModal } from "~/utils/store/modal";

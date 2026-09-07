@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { HEADER_HEIGHT } from "@acme/shared/app/constants";
-import { RERENDER_LOGS } from "@acme/shared/common/constants";
+import { RERENDER_LOGS } from "~/utils/constants";
 import { cn } from "@acme/ui";
 
 import { MapSearchBox } from "./map/map-searchbox-desktop";

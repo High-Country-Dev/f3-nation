@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "@vis.gl/react-google-maps";
 
-import { COUNTRY_ZOOM } from "@acme/shared/app/constants";
+import { COUNTRY_ZOOM } from "~/utils/constants";
 
 import { VISIBLE_COUNTRIES } from "~/assets/visible-countries";
 import { mapStore } from "~/utils/store/map";

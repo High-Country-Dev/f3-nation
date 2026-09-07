@@ -7,7 +7,7 @@ import { FormDebugData } from "~/app/_components/forms/dev-debug-component";
 import { ContactDetailsForm } from "~/app/_components/forms/form-inputs/contact-details-form";
 import { ExistingLocationPickerForm } from "~/app/_components/forms/form-inputs/existing-location-picker-form";
 import { BaseModal } from "~/app/_components/modal/base-modal";
-import { isProduction } from "@acme/shared/common/constants";
+import { isProduction } from "~/utils/constants";
 import { client } from "~/orpc/client";
 import { AODetailsForm } from "../../forms/form-inputs/ao-details-form";
 import { LocationDetailsForm } from "../../forms/form-inputs/location-details-form";
