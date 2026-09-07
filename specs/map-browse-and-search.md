@@ -44,6 +44,13 @@ city X" to "this workout, this address, this time" in a few interactions.
   WHEN the user clicks the cluster THEN the map zooms toward its contents and
   the cluster splits into smaller clusters or individual pins.
 
+### Data visibility
+
+- **AC-15** — GIVEN the map data endpoint (`map.location.eventsAndLocations`)
+  THEN it returns only active, non-private events at active locations under
+  **active AOs** — an event whose AO org has been deactivated does not render,
+  even if the event row itself is still active. (Regression: #606.)
+
 ### Search
 
 - **AC-4** — GIVEN the user types 3+ characters in the search box THEN a
