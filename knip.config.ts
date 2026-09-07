@@ -53,6 +53,11 @@ const config: KnipConfig = {
       // the Python workspace; no TypeScript imports it.
       ignoreDependencies: ["f3-data-models"],
     },
+    "packages/db": {
+      // Only ever passed to drizzle-kit via `--config=`
+      // (src/reconcile-schema.ts), never statically imported.
+      entry: ["drizzle.introspect.config.ts"],
+    },
   },
 };
 

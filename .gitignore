@@ -60,6 +60,9 @@ yarn-error.log*
 # db exports
 .data
 
+# scratch output of `pnpm db:pull` (packages/db/src/reconcile-schema.ts)
+packages/db/drizzle/.introspected/
+
 # sentry
 .env.sentry-build-plugin 
 

@@ -297,7 +297,11 @@ violation is a `BAD_REQUEST`, not a 500.
 - **Migrations** (Drizzle, `packages/db`): generate and commit migrations; keep
   the journal consistent; run migrations as a **deploy step**, not during
   `docker build`. Use `pnpm db:pull` / `db:push` and `reset-test-db` per
-  [`AGENTS.md`](../AGENTS.md).
+  [`AGENTS.md`](../AGENTS.md). `db:pull` preserves `drizzle/schema.ts`'s
+  hand-maintained `.$type<>()` json annotations and `@acme/shared` enum/type
+  imports automatically (`packages/db/src/reconcile-schema.ts`) — adding a new
+  typed `jsonb()` meta column or shared enum wrap requires adding an entry to
+  that script's mapping tables, or the next pull will silently drop it.
 - **Indexes & N+1:** add indexes for hot lookups and join foreign keys
   (especially role/permission tables). Avoid per-row queries inside `for await`
   loops — batch them.
