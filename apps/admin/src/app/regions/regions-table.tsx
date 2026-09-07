@@ -22,19 +22,22 @@ import { MobileFilterSheet } from "../_components/mobile-filter-sheet";
 import { ResetFilter } from "../_components/reset-filter";
 import { StatusFilter } from "../_components/status-filter";
 import { AreaFilter } from "./area-filter";
+import { REGIONS_DEFAULT_INPUT } from "./regions-default-input";
 import { SectorFilter } from "./sector-filter";
 
 type Org = NonNullable<RouterOutputs["org"]["all"]>["orgs"][number];
 
 export const RegionsTable = () => {
-  const { pagination, setPagination } = usePagination();
+  const { pagination, setPagination } = usePagination({
+    pageSize: REGIONS_DEFAULT_INPUT.pageSize,
+  });
   const [selectedSectors, setSelectedSectors] = useState<Org[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<Org[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<IsActiveStatus[]>([
-    "active",
+    ...REGIONS_DEFAULT_INPUT.statuses,
   ]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [onlyMine, setOnlyMine] = useState(true);
+  const [onlyMine, setOnlyMine] = useState(REGIONS_DEFAULT_INPUT.onlyMine);
 
   const { data: sectorsData } = useQuery(
     orpc.org.all.queryOptions({
@@ -76,7 +79,7 @@ export const RegionsTable = () => {
   const { data: regionsData } = useQuery(
     orpc.org.all.queryOptions({
       input: {
-        orgTypes: ["region"],
+        orgTypes: REGIONS_DEFAULT_INPUT.orgTypes,
         pageIndex: pagination.pageIndex,
         pageSize: pagination.pageSize,
         statuses: selectedStatuses,
